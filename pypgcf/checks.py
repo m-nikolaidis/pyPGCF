@@ -58,3 +58,8 @@ def is_valid_genefinding_tool(tool: str):
         f"Invalid gene finding tool, please use one of the following: {','.join(config.smbgc_genefinding_tools)}"
     )
     return False
+
+def is_valid_assembly_source(source: str) -> bool:
+    if source == "RefSeq" or source == "Genbank":
+        return True
+    return False
