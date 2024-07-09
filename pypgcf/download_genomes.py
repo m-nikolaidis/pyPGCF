@@ -16,7 +16,7 @@ FILETYPE_TO_DIR = {
     "genome": "Genomic_fasta_files",
 }
 
-GBFF_INFO_COLUMNS = ["organism", "strain", "isolation_source", "host", "note", "Perc_pseudogenes", "Genome_len", "N%", "GC%", "Num_plasmids"]
+GBFF_INFO_COLUMNS = ["organism", "strain", "isolation_source", "host", "note", "country", "collection_date", "Perc_pseudogenes", "Genome_len", "N%", "GC%", "Num_plasmids"]
 
 class GenomeDownloader:
     """
@@ -30,12 +30,14 @@ class GenomeDownloader:
         out_dir: Path,
         assembly_level: str = "chromosome,complete",
         assembly_source: str = "RefSeq",
+        keep_plasmids: bool = True,
         debug: bool = False,
     ):
         self.taxon = taxon
         self.assembly_level = assembly_level
         self.out_dir = out_dir
         self.assembly_source = assembly_source
+        self.keep_plasmids = keep_plasmids
         self.debug = debug
         self.gbff_source_info = {}
         self.plasmids_per_genome = {} 
@@ -64,6 +66,8 @@ class GenomeDownloader:
 
     def extract_dataset_zip(self) -> None:
         filename = self.out_dir / "dataset.zip"
+        if not checks.check_if_file_exists(filename):
+            raise FileNotFoundError(f"{filename} doesn't exist")
         with ZipFile(filename, 'r') as zf:
             zf.extractall(self.out_dir)
         return None
@@ -151,19 +155,19 @@ class GenomeDownloader:
         if location is None:
             return SeqRecord()
         if location.strand == -1:
-            seq = location.extract(record).reverse_complement()
+            seq = location.extract(record.seq).reverse_complement()
         else:
-            seq = location.extract(record)
-        rna_record = SeqRecord(name=locus_tag, seq=seq)
+            seq = location.extract(record.seq)
+        rna_record = SeqRecord(name=locus_tag, id=locus_tag, seq=seq)
         return rna_record
 
     
-    def calculate_perc_pseudogenes(records: list) -> float:
+    def calculate_perc_pseudogenes(self, records: list) -> float:
         num_pseudogenes = 0
         num_genes = 0
         perc_pseudogenes = 100.0
         for record in records:
-            for feature in tqdm(record.features):
+            for feature in record.features:
                 if feature.type != "CDS":
                     continue
                 num_genes += 1
@@ -205,7 +209,7 @@ class GenomeDownloader:
                 total_gc += c_count
                 total_genome_len += seqlen
         total_unknown_perc = round(total_unknown_nucl / total_genome_len * 100, 2)
-        total_gc_perc = round(total_gc / total_genome_len * 100, 5)
+        total_gc_perc = round(total_gc / total_genome_len * 100, 3)
         return total_genome_len, total_unknown_perc, total_gc_perc
     
     def identify_plasmids_from_gbff(self, records: list) -> list:
@@ -227,6 +231,9 @@ class GenomeDownloader:
         for genome, file in tqdm(self.gbff_files.items(), desc="Extracting information"):
             parser = SeqIO.parse(file, "genbank")
             records = [r for r in parser]
+            plasmids = self.identify_plasmids_from_gbff(records)
+            if not self.keep_plasmids:
+                records = [r for r in records if r.name not in plasmids]
             genome_fout = self.out_dir /  FILETYPE_TO_DIR.get("genome") / (genome + ".fna")
             protein_fout = self.out_dir /  FILETYPE_TO_DIR.get("protein") / (genome + ".faa")
             cds_fout = self.out_dir /  FILETYPE_TO_DIR.get("cds") / (genome + ".fna")
@@ -234,11 +241,10 @@ class GenomeDownloader:
             self.gbff_file_to_protein_fasta(records, protein_fout)
             self.gbff_file_to_cds_fasta(records, cds_fout)
             rrna_16S_record = self.get_16S_from_gbff(records)
-            gbff_source_info = self.gather_gbff_source_info(records)
-            plasmids = self.identify_plasmids_from_gbff(records)
+            tmp_info = self.gather_gbff_source_info(records)
             perc_pseudogenes = self.calculate_perc_pseudogenes(records)
             genome_len, unknown_nucl, gc_perc = self.calculate_GC_and_N(records)
-            self.gbff_source_info[genome] = gbff_source_info
+            self.gbff_source_info[genome] = tmp_info
             self.gbff_source_info[genome]["Perc_pseudogenes"] = perc_pseudogenes
             self.gbff_source_info[genome]["Genome_len"] = genome_len
             self.gbff_source_info[genome]["N%"] = unknown_nucl
@@ -254,19 +260,19 @@ class GenomeDownloader:
         # TODO: Assign problematic assemblies
         # TODO: Keep only certain columns if they exist in the dataframe
         if not df.empty:
-            columns_to_keep = []
             for column in GBFF_INFO_COLUMNS:
                 if column in df.columns:
                     continue
                 df[column] = "X" # Assign the missing columns
-            df = df[columns_to_keep]
+            df = df[GBFF_INFO_COLUMNS]
         df.to_excel(fout, na_rep="X")
         return None
 
     def write_16S_fasta(self):
         records = []
         for genome, record in self.rrna_16S_records.items():
-            record.name = genome + "--" + record.name
+            record.description = record.name[:]
+            record.id = genome
             records.append(record)
         fout = self.out_dir / "16S_sequences.fna"
         SeqIO.write(records, fout, "fasta")
@@ -279,11 +285,3 @@ class GenomeDownloader:
         ]
         for item in to_remove:
             utils.recursive_unlink(item)
-
-    # def unzip_dehydrated_archive(self):
-    #     cmd = f"unzip {self.out_dir}/dataset.zip -d {self.out_dir}"
-    #     dispatchers.execute_command(cmd)
-    #
-    # def rehydrate_download(self):
-    #     cmd = f"datasets rehydrate --directory {self.out_dir}"
-    #     dispatchers.execute_command(cmd)

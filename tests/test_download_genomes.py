@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 import unittest
+import pytest
 from pypgcf import download_genomes, utils
 from Bio.SeqIO import parse
 from Bio.SeqRecord import SeqRecord
@@ -96,11 +97,12 @@ class TestModule(unittest.TestCase):
         utils.recursive_unlink(expected_directory)
         utils.recursive_unlink(readme_file)
 
-    def test_process_gbff_files(self):
+    def test_process_gbff_files_with_plasmids(self):
         data = Data()
         downloader = download_genomes.GenomeDownloader(
             taxon=data.taxon,
             out_dir=data.outdir,
+            keep_plasmids=True,
             debug=data.debug,
         )
         downloader.gbff_files = {
@@ -149,6 +151,59 @@ class TestModule(unittest.TestCase):
             self.assertEqual(num_f2_records, exp_num_f2_records)
             utils.recursive_unlink(expected_directory)
 
+    def test_process_gbff_files_without_plasmids(self):
+        data = Data()
+        downloader = download_genomes.GenomeDownloader(
+            taxon=data.taxon,
+            out_dir=data.outdir,
+            keep_plasmids=False,
+            debug=data.debug,
+        )
+        downloader.gbff_files = {
+            "GCF_022870945": Path("../test_data/GCF_022870945.gbff"), 
+            "GCF_902375805": Path("../test_data/GCF_902375805.gbff")
+        }
+        downloader.create_output_directories()
+        downloader.process_gbff_files()
+
+        expected_directories = [
+            data.outdir / "Genomic_fasta_files",
+            data.outdir / "Protein_fasta_files",
+            data.outdir / "CDS_fasta_files",
+        ]
+        suffixes = [".fna", ".faa", ".fna"]
+        num_records = {
+            "Genomic_fasta_files": {
+                "GCF_022870945": 1,
+                "GCF_902375805": 10,
+
+            },
+            "Protein_fasta_files": {
+                "GCF_022870945": 2440,
+                "GCF_902375805": 3563,
+            },
+            "CDS_fasta_files": {
+                "GCF_022870945": 2440,
+                "GCF_902375805": 3563,
+            },
+
+        }
+        for expected_directory, suffix in zip(expected_directories, suffixes):
+            g1 = "GCF_022870945"
+            g2 = "GCF_902375805"
+            f1 = expected_directory / (g1 + suffix)
+            f2 = expected_directory / (g2 + suffix)
+            self.assertIs(f1.exists(), True)
+            self.assertIs(f2.exists(), True)
+            num_f1_records = calculate_num_records_in_fasta(f1)
+            num_f2_records = calculate_num_records_in_fasta(f2)
+            exp_num_f1_records = num_records.get(expected_directory.stem, {}).get(g1)
+            exp_num_f2_records = num_records.get(expected_directory.stem, {}).get(g2)
+            if exp_num_f1_records is None or exp_num_f2_records is None:
+                raise ValueError("Not possible")
+            self.assertEqual(num_f1_records, exp_num_f1_records)
+            self.assertEqual(num_f2_records, exp_num_f2_records)
+            utils.recursive_unlink(expected_directory)
 
     def test_calculate_GC_and_N_base(self):
         records = [
@@ -270,10 +325,27 @@ class TestModule(unittest.TestCase):
         self.assertIs(df.empty, True)
         
 
-
-
     def test_write_annotations_invalid_input(self): # Is this possible?
         ...
+
+    @pytest.mark.skip(reason="Gives too many requests error")
+    def test_pipeline(self):
+        data = Data()
+        outdir = data.outdir / "tmp"
+        outdir.mkdir(exist_ok=True)
+        downloader = download_genomes.GenomeDownloader(
+            taxon=data.taxon,
+            out_dir=outdir,
+            debug=False,
+        )
+        downloader.download_hydrated()
+        downloader.extract_dataset_zip()
+        downloader.create_output_directories()
+        downloader.save_gbff_dir_to_memory()
+        downloader.process_gbff_files()
+        downloader.write_annotation()
+        downloader.write_16S_fasta()
+
     # def test_gbff_file_to_genomic_fasta
     #     data = Data()
     #     downloader = download_genomes.GenomeDownloader(

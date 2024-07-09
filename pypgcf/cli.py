@@ -17,6 +17,7 @@ from pypgcf.orthologues import Orthologues_identifier
 from pypgcf.phylogenomic import Phylogenomic
 from pypgcf.smbgc import smBGCInstaller, smBGCLocalRunner, smBGCParser
 from pypgcf.species_demarcation import SpeciesDemarcator
+from pypgcf.download_genomes import GenomeDownloader
 
 
 def main():
@@ -274,6 +275,33 @@ def main():
     smbgc.add_argument("--debug", help="Print debug information", action="store_true")
     # smbgc.add_argument("--remote", help="Submit queries to antiSMASH web service", action="store_true")
 
+    # download module
+    download = subparsers.add_parser(
+        "download",
+        help="download module",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Used to download genomes from NCBI datasets",
+    )
+    download.add_argument(
+        "-o", metavar="out", help="Output directory", required=True
+    )
+    download.add_argument(
+        "-t", metavar="taxon", help="Taxon to search", required=True
+    )
+    # ref_exclusive = orthologues_basic.add_mutually_exclusive_group(required=True) use this to provide specific gffs from file
+    # ref_exclusive.add_argument("-ref", help="Reference strain")
+    # ref_exclusive.add_argument("-ref_list", help="List of reference strains to use")
+    download.add_argument(
+        "--source", help="Assembly source [either: RefSeq or GenBank]", default="RefSeq"
+    )
+    download.add_argument(
+        "--level", help="Assembly level of genomes [available options: contig, scaffold, chromosome, complete]", default="chromosome,complete"
+    )
+    download.add_argument("--keep_plasmids", help="Keep plasmids for analyses", action="store_true")
+    download.add_argument("--keep_download", help="Keep downloaded archive", action="store_true")
+    download.add_argument("--debug", help="Print debug information", action="store_true")
+
+
     # Parse arguments
     args = vars(parser.parse_args())
     if args["module"] == "species_demarcation":
@@ -473,4 +501,34 @@ def main():
         local_runner.analyze_genomes()
         parser = smBGCParser(out_dir, cores)
         parser.gather_results()
+        print(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+
+
+    if args["module"] == "download":
+        out_dir = Path(args["out"])
+        if not checks.check_if_dir_exists(out_dir):
+            print(f"{out_dir} does not exist")
+            return
+        taxon = args["taxon"]
+        debug = args["debug"]
+        assembly_source = args["source"]
+        assembly_level = args["level"]
+        keep_plasmids = args["keep_plasmids"]
+        keep_archive = args["keep_download"]
+        downloader = GenomeDownloader(taxon=taxon, 
+                                      out_dir=out_dir, 
+                                      assembly_level=assembly_level, 
+                                      assembly_source=assembly_source, 
+                                      keep_plasmids=keep_plasmids
+                                      debug=debug
+                                      )
+        print(f"Starting download: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+        downloader.download_hydrated()
+        downloader.extract_dataset_zip()
+        downloader.create_output_directories()
+        downloader.process_gbff_files()
+        downloader.write_annotations()
+        downloader.write_16S_fasta()
+        if not keep_archive:
+            downloder.remove_dataset_archive()
         print(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
