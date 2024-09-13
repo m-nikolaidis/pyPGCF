@@ -5,18 +5,16 @@ Module that contains utlity functions used throughout the software
 from concurrent.futures import ProcessPoolExecutor
 from gzip import GzipFile
 from math import floor
-from os import fork, system
+from os import system
 from pathlib import Path
-from subprocess import Popen
+from tempfile import mkstemp
 from typing import Callable, List, Union
 from zipfile import ZipFile
-from tempfile import mkstemp
 
-from Bio import Seq, SeqIO, SeqRecord
+import requests
+from Bio import SeqIO
 from pandas import DataFrame
 from tqdm import tqdm
-
-from pypgcf import config
 
 
 def recursive_unlink(input: Path) -> None:
@@ -124,6 +122,22 @@ def create_blastn_cmd(
     return cmd
 
 
+def create_blastdb_cmd(file: Path, input_type: str) -> str:
+    """
+    Create the command to index a database for blast
+    """
+    if input_type != "nucl" and input_type != "prot":
+        return ""
+    return f"makeblastdb -dbtype {input_type} -in {file} -out {file} > /dev/null"
+
+
+def create_diamonddb_cmd(file: Path) -> str:
+    """
+    Create the command to index a database for blast
+    """
+    return f"diamond makedb --in {file} --db {file} > /dev/null"
+
+
 def perform_homology_search(self): ...
 
 
@@ -161,42 +175,6 @@ def check_if_file_exists(file: Path) -> bool:
     Check if a file exists
     """
     if file.exists():
-        return True
-    return False
-
-
-def is_valid_antismash_strict(strictness: str):
-    """
-    Check if the strictness level is valid
-    """
-
-    if strictness in config.smbgc_valid_strictness:
-        return True
-    print(
-        f"Invalid strictness level, please use one of the following: {','.join(config.smbgc_valid_strictness)}"
-    )
-    return False
-
-
-def is_valid_genefinding_tool(tool: str) -> bool:
-    """
-    Check if the gene finding tool is valid
-    """
-
-    if tool in config.smbgc_genefinding_tools:
-        return True
-    print(
-        f"Invalid gene finding tool, please use one of the following: {','.join(config.smbgc_genefinding_tools)}"
-    )
-    return False
-
-
-def is_valid_assembly_source(source: str) -> bool:
-    """
-    Check if assembly source is valid.
-    Needed for the download_genomes module
-    """
-    if source == "RefSeq" or source == "Genbank":
         return True
     return False
 
@@ -239,17 +217,21 @@ def unzip_file(file: Path, method: str) -> None:
     if not check_if_file_exists(file):
         raise FileNotFoundError(f"{file} doesn't exist")
     parent_dir = file.absolute().parent
+
     if method != "zip" and method != "gzip":
         raise ValueError(f"Invalid compress method: {method}")
+
     if method == "zip":
         with ZipFile(file, "r") as zf:
             zf.extractall(parent_dir)
+
     if method == "gzip":
         fout = parent_dir / file.name.replace(".gz", "")
         with GzipFile(file) as rf:
             with open(fout, "wb") as wf:
                 for line in rf.readlines():
                     wf.write(line)
+
     return None
 
 
@@ -277,6 +259,25 @@ def create_temporary_file(dir: Union[Path, None] = None) -> Path:
 
 def dict_to_dataframe(d: dict) -> DataFrame:
     return DataFrame.from_dict(d, orient="index")
+
+
+def download_file(url: str, filename: Union[Path, str]) -> int:
+    response = requests.get(url, stream=True)
+    chunk_size = 1024
+    downloaded_size = 0
+    with open(filename, "wb") as f:
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            size = f.write(chunk)
+            downloaded_size += size
+    return downloaded_size
+
+
+def get_remote_file_size(url: str) -> int:
+    response = requests.head(url, allow_redirects=True)
+    if "content-length" in response.headers:
+        expected_size = int(response.headers["content-length"])
+        return expected_size
+    return 0
 
 
 # TODO::     # def verify_databases_exist(database_directory: Path) -> List[bool]:
