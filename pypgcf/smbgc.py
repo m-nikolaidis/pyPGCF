@@ -1,47 +1,48 @@
-from concurrent.futures import ProcessPoolExecutor
 import json
-from math import ceil as math_ceil
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 from tqdm import tqdm
 
-from pypgcf import dispatchers
-from pypgcf.checks import check_if_file_exists
-from pypgcf.config import system_cores
-
-
-class smBGCInstaller:
-    def __init__(self, debug: bool = False):
-        self.debug = debug
-
-    def install_databases(self):
-        print("Downloading databases of antiSMASH")
-        cmd = "download-antismash-databases"
-        ret = dispatchers.execute_command(cmd)
-        if self.debug:
-            if ret == 0:
-                print("Installed antiSMASH database successfully")
-            else:
-                print("Something went wrong with the download of antiSMASH database")
+from pypgcf.utils import (
+    check_if_file_exists,
+    execute_command,
+    multiprocess_dispatch,
+    calc_avail_dispatchers,
+)
 
 
 class smBGCLocalRunner:
     def __init__(
         self,
-        genome_fasta_dir: Path,
+        *,
+        genome_fasta_files: Path,
         out_dir: Path,
-        cores: int,
         strictness: str,
         genefinding_tool: str,
+        database_dir: Union[Path, None],
+        cores: int,
+        available_cores: int,
+        concurrent: bool,
         debug: bool,
     ):
-        self.genome_fasta_dir = genome_fasta_dir
         self.antismash_raw_results_dir = out_dir / "smBGC" / "antismash_raw_results"
         self.cores = cores
         self.strictness = strictness
         self.genefinding_tool = genefinding_tool
+        self.database_dir = database_dir
         self.debug = debug
+        self.genome_files = genome_fasta_files
+
+        if concurrent:
+            self.concurrent_jobs = calc_avail_dispatchers(
+                available_cores, cores, avoid_throttle=True
+            )
+        else:
+            self.concurrent_jobs = 0
+        if self.concurrent_jobs == 0:
+            self.concurrent_jobs = 1
 
     def create_antismash_cmd(self, genome_fasta_file: Path, genome_out_dir: Path):
         cmd = " ".join(
@@ -55,47 +56,37 @@ class smBGCLocalRunner:
                 f"{genome_fasta_file.absolute()}",
             ]
         )
+        if self.database_dir is not None:
+            cmd += f" --databases {self.database_dir}"
+
         if self.debug:
             cmd += " -v -d"
         return cmd
 
-    # def run_antismash_cmd(self, cmd: str):
-    #     system(cmd)
-
     def analyze_genomes(self):
-        maximum_number_of_available_jobs = math_ceil(system_cores / self.cores)
-        if maximum_number_of_available_jobs > 1:
-            maximum_number_of_available_jobs -= 1
-            # Keep the system running smoothly
-        genome_files = list(self.genome_fasta_dir.glob("*"))
         genome_out_dirs = []
-        for genome_file in genome_files:
+        for genome_file in self.genome_files:
             genome_out_dir = self.antismash_raw_results_dir / genome_file.stem
             genome_out_dirs.append(genome_out_dir)
             genome_out_dir.mkdir(exist_ok=True, parents=True)
         commands = [
             self.create_antismash_cmd(gf, go)
-            for gf, go in zip(genome_files, genome_out_dirs)
+            for gf, go in zip(self.genome_files, genome_out_dirs)
         ]
         if self.debug:
             for cmd in tqdm(
                 commands, ascii=True, leave=True, desc="Running antiSMASH in debug mode"
             ):
-                dispatchers.execute_command(cmd)
-            #     self.run_antismash_cmd(cmd)
+                execute_command(cmd)
 
         else:
-            dispatchers.multiprocess_dispatch("system", commands, maximum_number_of_available_jobs, show_progress=True, description="Running antiSMASH")
-            # with ProcessPoolExecutor(maximum_number_of_available_jobs) as executor:
-            #     list(
-            #         tqdm(
-            #             executor.map(self.run_antismash_cmd, commands),
-            #             desc="Running antiSMASH",
-            #             ascii=True,
-            #             leave=True,
-            #             total=len(commands),
-            #         )
-            #     )
+            _ = multiprocess_dispatch(
+                "system",
+                commands,
+                self.concurrent_jobs,
+                show_progress=True,
+                description="Running antiSMASH",
+            )
 
 
 class smBGCParser:
@@ -113,7 +104,7 @@ class smBGCParser:
                 json_str += line
         return json.loads(json_str)
 
-    def get_known_cluster_results(self, seq_obj):
+    def get_known_cluster_results(self, seq_obj) -> str:
         clusterblast_res = seq_obj["modules"]["antismash.modules.clusterblast"][
             "knowncluster"
         ]["results"]
@@ -183,15 +174,22 @@ class smBGCParser:
         self.final_df.to_excel(fout, index=False)
 
     def gather_results(self):
-        total_data = []
-        with ProcessPoolExecutor(self.parsing_cores) as executor:
-            for dataframe in tqdm(
-                executor.map(self.parse_strain_results, self.antismash_subdirs),
-                total=len(self.antismash_subdirs),
-                desc="Parsing antiSMASH results",
-                ascii=True,
-                leave=True,
-            ):
-                total_data.append(dataframe)
+        total_data = multiprocess_dispatch(
+            self.parse_strain_results,
+            self.antismash_subdirs,
+            self.parsing_cores,
+            show_progress=True,
+            description="Parsing antiSMASH results",
+        )
+        # total_data = []
+        # with ProcessPoolExecutor(self.parsing_cores) as executor:
+        #     for dataframe in tqdm(
+        #         executor.map(self.parse_strain_results, self.antismash_subdirs),
+        #         total=len(self.antismash_subdirs),
+        #         desc="Parsing antiSMASH results",
+        #         ascii=True,
+        #         leave=True,
+        #     ):
+        #         total_data.append(dataframe)
         self.final_df = pd.concat(total_data)
         self.write_antismash_results()

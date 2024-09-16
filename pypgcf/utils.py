@@ -278,8 +278,3 @@ def get_remote_file_size(url: str) -> int:
         expected_size = int(response.headers["content-length"])
         return expected_size
     return 0
-
-
-# TODO::     # def verify_databases_exist(database_directory: Path) -> List[bool]:
-# Implement: Check if the database files from VFs, CAZY, eggNOG, antiSMASH exist
-# Shouldn't throw an error if something doesn't exist, the user might want to use only specific databases
