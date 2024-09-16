@@ -3,16 +3,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Generator, List, Union
 
-from numpy import nan as npnan
-import pandas as pd
+from pandas import read_csv
 
-from pypgcf import dispatchers
-from pypgcf.checks import check_if_file_exists
+from pypgcf.utils import check_if_file_exists, execute_command, dict_to_dataframe
 
 
 class SpeciesDemarcator:
     def __init__(
         self,
+        *,
         in_dir: Path,
         out_dir: Path,
         fastani_cores: int,
@@ -58,7 +57,7 @@ class SpeciesDemarcator:
         )
         if not self.debug:
             cmd += " > /dev/null 2>&1"
-        ret = dispatchers.execute_command(cmd)
+        ret = execute_command(cmd)
         if ret != 0:
             raise RuntimeError("fastANI command was not successful")
         return None
@@ -68,9 +67,8 @@ class SpeciesDemarcator:
         This script prepares the input file for fastANI.
         """
         headers = ["query", "target", "ANI", "query_length", "target_length"]
-        df = pd.read_csv(input_file, sep="\t", index_col=0, names=headers)
-        df["ANI"] = df["ANI"].apply(lambda x: npnan if x < 95 else x)
-        df = df.dropna()
+        df = read_csv(input_file, sep="\t", index_col=0, names=headers)
+        df = df[df["ANI"] >= 95]
         df = df.drop(columns=["query_length", "target_length"])
         fout = input_file.parent / "fastANI_for_mcl.txt"
         df.to_csv(fout, sep="\t", header=False)
@@ -104,7 +102,7 @@ class SpeciesDemarcator:
         for cmd in cmds:
             if not self.debug:
                 cmd += " > /dev/null 2>&1"
-            ret = dispatchers.execute_command(cmd)
+            ret = execute_command(cmd)
             if ret != 0:
                 raise RuntimeError("Something went wrong with MCL")
         self.clean_mcl(outdir)
@@ -116,10 +114,10 @@ class SpeciesDemarcator:
         results = {}
         clust_num = 0
         for lines in csv.reader(open(str(fastani_from_mcl), "r"), delimiter="\t"):
-            for l in lines:
-                results[l] = clust_num
+            for line in lines:
+                results[line] = clust_num
             clust_num += 1
-        df = pd.DataFrame.from_dict(results, orient="index")
+        df = dict_to_dataframe(results)
         df.columns = ["ClustNum"]
         df["FastANI_species"] = df["ClustNum"].apply(lambda x: "C" + str(x))
         df = df.drop("ClustNum", axis=1)
@@ -133,20 +131,25 @@ class SpeciesDemarcator:
     def assign_species(self):
         # Check if input is file or directory
         self.create_directories()
+
         files_for_fastani = self.in_dir.glob("*")
         tmp_file_for_fastani = self.out_dir / "FastANI_input.txt"
         self.create_input_for_fastani(files_for_fastani, tmp_file_for_fastani)
         if not check_if_file_exists(tmp_file_for_fastani):
             raise FileNotFoundError(f"{tmp_file_for_fastani} was not created")
+
         fastani_out = self.out_dir / "FastANI.tsv"
         self.perform_fastani(tmp_file_for_fastani, fastani_out)
         if not check_if_file_exists(fastani_out):
             raise FileNotFoundError(f"{fastani_out} was not created")
+
         fastani_for_mcl = self.prepare_input_for_mcl(fastani_out)
         if not check_if_file_exists(fastani_for_mcl):
             raise FileNotFoundError(f"{fastani_for_mcl} was not created")
+
         fastani_from_mcl = self.run_mcl(fastani_for_mcl)
         if not check_if_file_exists(fastani_from_mcl):
             raise FileNotFoundError(f"{fastani_from_mcl} was not created")
+
         self.parse_mcx_output(fastani_from_mcl)
         print(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
