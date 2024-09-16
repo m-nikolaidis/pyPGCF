@@ -1,6 +1,4 @@
 from datetime import datetime
-from math import floor
-from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Iterable, Union
 
@@ -8,34 +6,47 @@ from Bio import SeqIO
 import pandas as pd
 from tqdm import tqdm
 
-from pypgcf import dispatchers
+from pypgcf.utils import (
+    execute_command,
+    multiprocess_dispatch,
+    calc_avail_dispatchers,
+    recursive_unlink,
+)
 
 
 class Orthologues_identifier:
     def __init__(
         self,
-        fasta_dir: Path,
+        *,
+        fasta_files_list: list[Path],
         out_dir: Path,
         ref: Union[str, None],
         ref_list: Union[str, None],
         input_type: str,
-        cores: int,
+        available_cores: int,
+        blast_cores: int,
+        concurrent: bool,
         evalue: float,
         dmnd_sensitivity: str,
         no_filter: bool,
     ):
         self.ref = ref
         self.ref_list = ref_list
-        self.in_dir = fasta_dir.parent
         self.out_dir = out_dir / "Orthologues"
-        self.blast_cores = cores
+        self.blast_cores = blast_cores
         self.blast_evalue = evalue
         self.dmnd_sensitivity = dmnd_sensitivity
-        self.fasta_files = list(fasta_dir.glob("*"))
+        self.fasta_files = fasta_files_list
         self.input_type = input_type
         self.no_filter = no_filter
         self.blast_db_dir = out_dir / "Blast_DB"
-        self.concurrent_jobs = floor((cpu_count() - 2) / cores)
+
+        if concurrent:
+            self.concurrent_jobs = calc_avail_dispatchers(
+                available_cores, blast_cores, avoid_throttle=True
+            )
+        else:
+            self.concurrent_jobs = 0
         if self.concurrent_jobs == 0:
             self.concurrent_jobs = 1
 
@@ -54,10 +65,9 @@ class Orthologues_identifier:
         makeblastdb_bin = "makeblastdb"
 
         self.blast_bin = diamond_bin
-        if self.input_type == "nucl":
+        if self.input_type == "CDS":
             self.blast_bin = blastn_bin
             self.blast_db_bin = makeblastdb_bin
-
 
     def create_blast_db(self) -> None:
         """
@@ -68,9 +78,9 @@ class Orthologues_identifier:
         ):
             database_f = self.blast_db_dir / fasta_file.stem
             cmd = f"{self.blast_bin} makedb --in {fasta_file} --quiet --db {database_f} --threads {self.blast_cores}"  # DIAMOND
-            if self.input_type == "nucl":
+            if self.input_type == "CDS":
                 cmd = f"{self.blast_db_bin} -in {fasta_file} -dbtype nucl -out {database_f}"
-            dispatchers.execute_command(cmd)
+            execute_command(cmd)
 
     def _create_blast_cmd(
         self, fasta_file: Path, database_f: Path, out_file: Path
@@ -92,14 +102,13 @@ class Orthologues_identifier:
         return cmd
 
     def setup(self) -> None:
-        if self.ref != None:
+        if self.ref is not None:
             self._create_directories(self.ref)
-        if self.ref_list != None:
-            list_in = open(self.ref_list, "r")
-            for ref in list_in:
-                ref = ref.rstrip()
-                self._create_directories(ref)
-            list_in.close()
+        if self.ref_list is not None:
+            with open(self.ref_list, "r") as rf:
+                for ref in rf.readlines():
+                    ref = ref.rstrip()
+                    self._create_directories(ref)
         self._get_blast_binaries()
 
     def perform_reciprocal_blast(self, ref: str):
@@ -109,7 +118,7 @@ class Orthologues_identifier:
         for fasta_file in self.fasta_files:
             if ref in fasta_file.name:
                 ref_fasta = fasta_file
-        if ref_fasta == None:
+        if ref_fasta is None:
             raise FileNotFoundError(f"{ref} is not in input fasta file names")
 
         ref_db = self.blast_db_dir / ref
@@ -136,7 +145,13 @@ class Orthologues_identifier:
             cmds.append(forward_blast)
             cmds.append(reverse_blast)
 
-        _ = dispatchers.multiprocess_dispatch("system", cmds, self.concurrent_jobs, show_progress=True, description="Performing reciprocal homology search")
+        _ = multiprocess_dispatch(
+            "system",
+            cmds,
+            self.concurrent_jobs,
+            show_progress=True,
+            description="Performing reciprocal homology search",
+        )
         return ref_fasta
 
     def _get_best_subject(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -267,8 +282,6 @@ class Orthologues_identifier:
         """
         # Pass all genes of the Refseq into a list
 
-        # TODO: Maybe i could speed things up here. Check if applicable and worth it
-
         refgenes = SeqIO.parse(str(ref_fasta), "fasta")
         reciprocal_f_dir = self.out_dir / ref / "Best_reciprocal_hits"
         reciprocal_files = list(reciprocal_f_dir.glob("*"))
@@ -293,18 +306,13 @@ class Orthologues_identifier:
         orthology_matrix_f = self.out_dir / ref / "OGmatrix.csv"
         orthology_matrix_df.to_csv(orthology_matrix_f, sep="\t")
 
-    def clean_database(self):
-        for file in self.blast_db_dir.glob("*"):
-            file.unlink()
-        self.blast_db_dir.rmdir()
-
     def calculate_orthologues(self):
         refs = []
         self.setup()
-        if self.ref != None:
+        if self.ref is not None:
             ref = self.ref
             refs.append(ref)
-        if self.ref_list != None:
+        if self.ref_list is not None:  # Duplicate code in setup function
             list_in = open(self.ref_list, "r")
             for ref in list_in:
                 ref = ref.rstrip()
@@ -324,4 +332,4 @@ class Orthologues_identifier:
             )
             self.create_orthology_matrix(ref, ref_fasta)
             print(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
-        self.clean_database()
+        recursive_unlink(self.blast_db_dir)
