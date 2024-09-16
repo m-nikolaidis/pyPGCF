@@ -1,5 +1,4 @@
 from pathlib import Path
-import pandas as pd
 import unittest
 from pypgcf import core
 
@@ -53,9 +52,6 @@ class TestModule(unittest.TestCase):
         df, fout = instance.calculate_core()
         self.assertEqual(df["Core_100%"].sum(), 4073)
         self.assertEqual(df["Is fingerprint"].sum(), 1936)
-
-    def test_split_genomes_into_groups(self):
-        pass
 
     def test_split_genomes_into_groups_unequal_input(self):
         """
