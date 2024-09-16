@@ -32,6 +32,11 @@ class CAZY_installer:
             f"dbcan_build --cores {self.cores} --db-dir {self.database_dir} --clean"
         )
         retval = execute_command(build_cmd)
+
+        build_date = datetime.now().strftime("%D")
+        with open(self.database_dir / "log.txt", "w") as wf:
+            wf.write(f"# Database downloaded and built: {build_date}{linesep}")
+
         return retval
 
 
@@ -202,6 +207,9 @@ class AMR_installer:
                     f"Something went wrong with the download of {file} (AMR database)"
                 )
         self._index_database()
+        build_date = datetime.now().strftime("%D")
+        with open(self.database_dir / "log.txt", "w") as wf:
+            wf.write(f"# Database downloaded and built: {build_date}{linesep}")
 
         return None
 
@@ -228,6 +236,9 @@ class SMBGC_installer:
                 raise RuntimeError(
                     "Something went wrong with the download of antiSMASH database"
                 )
+        build_date = datetime.now().strftime("%D")
+        with open(self.database_dir / "log.txt", "w") as wf:
+            wf.write(f"# Database downloaded and built: {build_date}{linesep}")
 
 
 class EGGNOG_installer:
@@ -251,3 +262,6 @@ class EGGNOG_installer:
                 raise RuntimeError(
                     "Something went wrong with the download of eggNOG database"
                 )
+        build_date = datetime.now().strftime("%D")
+        with open(self.database_dir / "log.txt", "w") as wf:
+            wf.write(f"# Database downloaded and built: {build_date}{linesep}")
