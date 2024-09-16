@@ -1,4 +1,3 @@
-from multiprocessing import cpu_count
 from pathlib import Path
 import re
 
@@ -7,7 +6,6 @@ import logging
 
 from pypgcf.utils import (
     calc_avail_dispatchers,
-    execute_command,
     multiprocess_dispatch,
     create_temporary_file,
     translate_fasta_records,
@@ -16,49 +14,40 @@ from pypgcf.utils import (
 )
 
 
-class CAZY_builder:
-    def __init__(self, database_dir: Path, cores: int, verbose: bool):
-        self.database_dir = database_dir / "CAZY"
-        self.cores = cores
-
-    def setup(self) -> int:
-        build_cmd = (
-            f"dbcan_build --cores {self.cores} --db-dir {self.database_dir} --clean"
-        )
-        retval = execute_command(build_cmd)
-        return retval
-
-    def validate_if_database_exists(self): ...
-
-
 class CAZY_analyzer:
     def __init__(
         self,
-        cores: int,
-        evalue: float,
+        *,
+        fasta_files_list: list[Path],
         database_dir: Path,
-        results_dir: Path,
-        fasta_dir: Path,
-        dmnd_sensitivity: str,
+        out_dir: Path,
         input_type: str,
+        available_cores: int,
+        cores: int,
+        concurrent: bool,
+        evalue: float,
         verbose: bool,
     ):
         self.cores = cores
         self.evalue = evalue
         # The asigned column names will be the same, need to fix the homology search function
         self.database_dir = database_dir / "CAZY"
-        self.results_dir = results_dir / "CAZY"
-        self.search_res_dir = results_dir / "CAZY" / "CAZY_search"
-        self.fasta_dir = fasta_dir
+        self.out_dir = out_dir / "CAZY"
+        self.search_res_dir = out_dir / "CAZY" / "CAZY_search"
+        self.fasta_files = fasta_files_list
         self.verbose = verbose
-        self.concurrent_jobs = calc_avail_dispatchers(
-            cpu_count(), cores, avoid_throttle=True
-        )
+        if concurrent:
+            self.concurrent_jobs = calc_avail_dispatchers(
+                available_cores, cores, avoid_throttle=True
+            )
+        else:
+            self.concurrent_jobs = 0
         if self.concurrent_jobs == 0:
             self.concurrent_jobs = 1
-        self.protein = True
-        if input_type != "prot":  # either prot or nucl
+        if input_type != "prot":  # either prot or CDS
             self.protein = False
+        else:
+            self.protein = True
 
         self.HMM_COORDS_RE = re.compile(r"\(\d+-\d+\)")
         self.FAMILY_MAPPING = {
@@ -71,13 +60,10 @@ class CAZY_analyzer:
         }
 
     def execute_cazy_search(self) -> None:
-        query_files = list(self.fasta_dir.glob("*"))
-        if len(query_files) == 0:
-            raise FileNotFoundError
         cmds = []
         if not self.search_res_dir.exists():
-            self.search_res_dir.mkdir(parents=True)
-        for query_file in query_files:
+            self.search_res_dir.mkdir(parents=True, exist_ok=True)
+        for query_file in self.fasta_files:
             outdir = self.search_res_dir / query_file.stem
             if not self.protein:
                 protein_f = create_temporary_file()
@@ -152,7 +138,7 @@ class CAZY_analyzer:
                     # dbcansub_r = self._clean_dmnd_dbcansub_output(dbcansub_r)
                     for family in dmnd_r.split(";"):
                         data[genome][family] += 1
-        fout = self.results_dir / "CAZY_families.xlsx"
+        fout = self.out_dir / "CAZY_families.xlsx"
         df = dict_to_dataframe(data)
         df.to_excel(fout)
         return None
