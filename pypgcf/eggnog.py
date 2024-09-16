@@ -282,10 +282,12 @@ class EggNOGParser:
         for table_f in self.core_protein_table_file_list:
             core_protein_table = read_excel(table_f, index_col=0)
             ref = str(core_protein_table.index.name)
+            if "species_core" not in table_f.stem:
+                ref += " (WholeSet)"
             core_proteins, fingerprints = self._get_protein_subsets_from_core_prot_df(
                 core_protein_table
             )
-            if ref not in self.proteome_cog_data:
+            if ref.replace(" (WholeSet)", "") not in self.proteome_cog_data:
                 logging.error(f"emapper results for {ref} weren't parsed")
                 core_protein_data[ref] = {}
                 fingerprint_protein_data[ref] = {}
@@ -306,7 +308,7 @@ class EggNOGParser:
             self.calculate_cog_category_counts_per_proteome(fingerprint_protein_data)
         )
 
-    def _get_protein_subsets_from_core_prot_df(self, df: DataFrame) -> dict:
+    def _get_protein_subsets_from_core_prot_df(self, df: DataFrame) -> tuple:
         """
         Get the core proteins and fingerprints (if availale) from core protein dataframe
         """
@@ -366,12 +368,24 @@ class EggNOGParser:
                     # No results were found by the read_core_protein_tables(self) function
                     continue
                 data[proteome] = {}
-                population_size = self.proteome_cog_counts[proteome]["Total"]
+                if " (WholeSet)" in proteome:
+                    population_size = self.proteome_cog_counts[
+                        proteome.replace(" (WholeSet)", "")
+                    ]["Total"]
+                else:
+                    population_size = self.proteome_cog_counts[proteome]["Total"]
                 sample_size = subset[proteome]["Total"]
                 for category in protein_cog_counts.keys():
                     if category == "Total":
                         continue
-                    population_successes = self.proteome_cog_counts[proteome][category]
+                    if " (WholeSet)" in proteome:
+                        population_successes = self.proteome_cog_counts[
+                            proteome.replace(" (WholeSet)", "")
+                        ][category]
+                    else:
+                        population_successes = self.proteome_cog_counts[proteome][
+                            category
+                        ]
                     sample_successes = subset[proteome][category]
                     pvalue, fold_change = self.perform_hypergeom_test(
                         population_size=population_size,

@@ -320,16 +320,9 @@ class TestEggNOGParser(unittest.TestCase):
         self.assertEqual(expected_percent_df.equals(observed_percent_df), True)
         tmpexcel.unlink()
 
-    @pytest.mark.skip(
-        reason="Can't figure out how to make it work in unit testing. Should add integration test"
-    )
-    @patch("pandas.read_excel")
-    @patch("context.eggnog.EggNOGParser._get_protein_subsets_from_core_prot_df")
+    @patch("context.eggnog.read_excel")
     @patch("pandas.ExcelFile")
-    @patch("pathlib.Path")
-    def test_read_core_protein_tables(
-        self, mock_path, mock_excel, mock_get_protein_subsets, mock_read_excel
-    ):
+    def test_read_core_protein_tables_wholeset(self, mock_excel, mock_read_excel):
         # Mock excel file
         wb = mock_excel.book()
         wb.create_sheet("Sheet1")
@@ -337,33 +330,39 @@ class TestEggNOGParser(unittest.TestCase):
         ws.loc["p1", "Core"] = 1
         ws.loc["p2", "Core"] = 1
         ws.loc["p3", "Core"] = 0
-        # Mock Excel data
-        mock_df = MagicMock(return_value=wb)
-        mock_read_excel.return_value = mock_df
-        #
-        # # Mock the protein subset data
-        # mock_get_protein_subsets.return_value = (["p1", "p2"], ["p3"])
-        #
-        self.parser.core_protein_table_file_list = [mock_path, mock_path]
-        #
-        # # Mock proteome_cog_data to simulate parsed eggNOG data
-        self.parser.proteome_cog_data = {
-            "Proteome1": {"p1": ["L"], "p2": ["K"], "p3": ["T"]},
-        }
-        #
+        ws.index.name = "Proteome1"
+        # mock_df = MagicMock(return_value=ws)
+        mock_read_excel.return_value = ws
+
+        # mock_path.name = "Proteome1_core.xlsx"
+        # print(mock_path)
+        self.parser.proteome_cog_data = {"Proteome1": {"K": 1, "L": 3}}
+
+        # Test with core.xlsx
+        file = Path("Proteome1_core.xlsx")
+        self.parser.core_protein_table_file_list = [file]
+
+        # Read the input excel files
         self.parser.read_core_protein_tables()
-        #
-        # # Check if read_excel is called correctly
-        # mock_read_excel.assert_called_with(
-        #     Path("/fake/core_protein_table1.xlsx"), index_col=0
-        # )
-        #
-        # # Ensure that the internal methods for processing protein subsets are called
-        # mock_get_protein_subsets.assert_called_once_with(mock_df)
-        #
-        # # Check if the cog counts were calculated (we'll assume calculate_cog_category_counts_per_proteome is tested separately)
-        # self.assertIn("Proteome1", parser.core_protein_cog_counts)
-        # self.assertIn("Proteome1", parser.fingerprint_protein_cog_counts)
+
+        # Check if the cog_data for core proteome and fingerprints are correct
+        self.assertIn("Proteome1 (WholeSet)", self.parser.core_protein_cog_counts)
+        self.assertIn(
+            "Proteome1 (WholeSet)", self.parser.fingerprint_protein_cog_counts
+        )
+
+        # Test with species_core.xlsx
+        file = Path("Proteome1_species_core.xlsx")
+        self.parser.core_protein_table_file_list = [file]
+
+        # Read the input excel files
+        self.parser.read_core_protein_tables()
+
+        # Check if the cog_data for core proteome and fingerprints are correct
+        self.assertNotIn("Proteome1 (WholeSet)", self.parser.core_protein_cog_counts)
+        self.assertNotIn(
+            "Proteome1 (WholeSet)", self.parser.fingerprint_protein_cog_counts
+        )
 
     def test_get_protein_subsets_from_core_prot_df(self):
         # Mock DataFrame
