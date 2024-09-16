@@ -1,11 +1,10 @@
 from pathlib import Path
+from typing import Union
 
-import pandas as pd
+from pandas import DataFrame, read_csv, concat
 
 from pypgcf.utils import (
     calc_avail_dispatchers,
-    create_blastn_cmd,
-    create_diamond_blastp_cmd,
     multiprocess_dispatch,
 )
 
@@ -14,24 +13,23 @@ class AMR_analyzer:
     def __init__(
         self,
         *,
-        fasta_dir: Path,
-        database_dir: Path,
-        results_dir: Path,
+        fasta_files_list: list[Path],
+        database_dir: Union[Path, None],
+        out_dir: Path,
         input_type: bool,
         available_cores: int,
         blast_cores: int,
-        evalue: float,
-        dmnd_sensitivity: str,
         concurrent: bool,
         debug: bool,
     ):
-        self.cpus = blast_cores
-        self.protein = True
         if input_type != "prot":  # either prot or nucl
             self.protein = False
-        self.results_dir = results_dir
-        self.fasta_dir = fasta_dir
+        else:
+            self.protein = True
+        self.out_dir = out_dir / "AMR"
+        self.fasta_files = fasta_files_list
         self.debug = debug
+        self.blast_cores = blast_cores
         if concurrent:
             self.concurrent_jobs = calc_avail_dispatchers(
                 available_cores, blast_cores, avoid_throttle=True
@@ -40,35 +38,32 @@ class AMR_analyzer:
             self.concurrent_jobs = 0
         if self.concurrent_jobs == 0:
             self.concurrent_jobs = 1
-
-        # TODO: If the input CDS the input should be first translated first?
+        if database_dir is None:
+            self.database_dir = None
+        else:
+            self.database_dir = database_dir / "AMR"
 
     def search_amr(self) -> None:
-        query_files = list(self.fasta_dir.glob("*"))
         cmds = []
-        outdir = self.results_dir / "AMR"
-        outdir.mkdir(exist_ok=True)
-        for query_file in query_files:
-            outfile = outdir / query_file.stem + ".txt"
-            if self.protein:
-                cmd = create_diamond_blastp_cmd(
-                    query_file,
-                    self.database_file,
-                    outfile,
-                    self.dmnd_sensitivity,
-                    self.evalue,
-                    self.cores,
-                    self.outfmt,
+        outdir = self.out_dir / "amrfinder"
+        outdir.mkdir(exist_ok=True, parents=True)
+        for query_file in self.fasta_files:
+            outfile = outdir / (query_file.stem + ".txt")
+
+            if self.database_dir is None:
+                cmd = (
+                    f"amrfinder --plus -i -1 -o {outfile} --threads {self.blast_cores}"
                 )
             else:
-                cmd = create_blastn_cmd(
-                    query_file,
-                    self.database_file,
-                    outfile,
-                    self.evalue,
-                    self.cores,
-                    self.outfmt,
-                )
+                cmd = f"amrfinder --plus -i -1 -o {outfile} --threads {self.blast_cores} -d {self.database_dir}"
+            if self.protein:
+                cmd += f" -p {query_file}"
+            else:
+                cmd += f" -n {query_file}"
+            if not self.debug:
+                cmd += " --quiet"
+            else:
+                cmd += " --debug"
             cmds.append(cmd)
 
         _ = multiprocess_dispatch(
@@ -76,24 +71,24 @@ class AMR_analyzer:
             cmds,
             self.concurrent_jobs,
             show_progress=True,
-            description="Scanning for virulence factors",
+            description="Scanning for AMR genes",
         )
         return None
 
     def parse_results(self):
         # Get the results form previous analysis
-        outdir = self.results_dir / "AMR"
+        outdir = self.out_dir / "amrfinder"
         files = list(outdir.glob("*"))
-        dfs = [pd.DataFrame()] * len(files)
+        dfs = [DataFrame()] * len(files)
         for idx, f in enumerate(files):
             genome = f.stem
-            df = pd.read_csv(f, sep="\t", index_col=0)
+            df = read_csv(f, sep="\t", index_col=0)
             df = df[df["Element type"] == "AMR"]
             df["Genome"] = genome
             dfs[idx] = df
 
-        total_df = pd.concat(dfs)
-        fout = self.results_dir / "AMR" / "AMRfinder_results.xlsx"
+        total_df = concat(dfs)
+        fout = self.out_dir / "AMRfinder_results.xlsx"
 
         # Write to excel
         total_df.to_excel(fout)
