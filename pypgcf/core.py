@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union
 
 from pandas import DataFrame, read_csv
-from utils import dict_to_dataframe
+from pypgcf.utils import dict_to_dataframe
 
 
 class Core_identifier:

@@ -1,39 +1,110 @@
-# Default configurations for the modules
+# Default configurations for the various modules
 # By M. Nikolaidis
 
 from multiprocessing import cpu_count
 from sys import platform as platform
+import sysconfig
+from pathlib import Path
 
-system = platform
+DB_BASE_DIR = Path(sysconfig.get_config_var("BINLIBDEST")) / "site-packages"
+TEST_DATA_DIR = Path(__file__).parent / ".." / "test_data/"
+
 system_cores = cpu_count()
+usable_cores = system_cores
+default_no_concurrent = False
+default_debug = False
 
-## 1. Species demarcation configs
-species_demarcation_cores = system_cores - 2
-species_demarcation_kmer = 16
-species_demarcation_fraglen = 3000
-species_demarcation_minfraction = 0.2
-species_demarcation_mcl_inflation = 2
-
-## 2. Orthologues configs
-orthologues_cores = 6
-orthologues_evalue = 1e-5
-orthologues_dmnd_sensitivity = "very-sensitive"
-
-## 3. Core configs
-core_core_perc = 100
-
-## 4. Phylogenomic configs
-phylogenomic_cores = system_cores - 2
-
-## 5. eggNOG configs
-eggnog_cores = system_cores - 2
-eggnog_pident = 40
-eggnog_scov = 20
-eggnog_qcov = 20
-
-## 6. smBGC configs
-smbgc_cores = 6
-smbgc_strictness = "strict"
-smbgc_genefinding_tool = "prodigal"
-smbgc_valid_strictness = ["loose", "relaxed", "strict"]
-smbgc_genefinding_tools = ["prodigal"]
+software_defaults = {
+    "system": {
+        "platform": platform,
+        "system_cores": system_cores,
+        "usable_cores": usable_cores,
+    },
+    "general": {
+        "input_type": "prot",
+        "valid_input_types": ["prot", "nucl", "cds"],
+    },
+    "species_demarcation": {
+        "cores": usable_cores,
+        "kmer": 16,
+        "fraglen": 3000,
+        "minfrac": 0.2,
+        "mcl_inflation": 2,
+        "debug": default_debug,
+    },
+    "orthologues": {
+        "cores": min(6, usable_cores),
+        "evalue": 1e-5,
+        "dmnd_sensitivity": "very-sensitive",
+        "no_concurrent": default_no_concurrent,
+        "no_filter_orthologues": False,
+        "debug": default_debug,
+    },
+    "core": {
+        "core_perc": 100,
+        "debug": default_debug,
+    },
+    "phylogenomic": {
+        "cores": usable_cores,
+        "valid_tree_methods": ["NJ", "IQTree", "Fasttree"],
+        "method": "IQTree",
+        "tree_model": "TEST",
+        "input_type": "prot",
+        "valid_input_types": ["prot", "cds"],
+        "no_keep_fasta": False,
+        "debug": default_debug,
+    },
+    "eggnog": {
+        "cores": usable_cores,
+        "pident": 40,
+        "scov": 20,
+        "qcov": 20,
+        "debug": default_debug,
+        "input_type": "prot",
+        "valid_input_types": ["prot", "cds"],
+    },
+    "smbgc": {
+        "cores": min(6, usable_cores),
+        "strictness": "strict",
+        "genefinding_tool": "prodigal",
+        "valid_strictness": ["loose", "relaxed", "strict"],
+        "genefinding_tools": ["prodigal"],
+        "no_concurrent": default_no_concurrent,
+        "debug": default_debug,
+    },
+    "virulence": {
+        "blast_cores": min(6, usable_cores),
+        "blast_evalue": 1e-5,
+        "dmnd_sensitivity": "very-sensitive",
+        "no_concurrent": default_no_concurrent,
+        "debug": default_debug,
+        "input_type": "prot",
+        "valid_input_types": ["prot", "cds"],
+    },
+    "cazy": {
+        "cores": min(6, usable_cores),
+        "evalue": 1e-5,
+        "no_concurrent": default_no_concurrent,
+        "debug": default_debug,
+        "input_type": "prot",
+        "valid_input_types": ["prot", "cds"],
+    },
+    "amr": {
+        "cores": min(6, usable_cores),
+        "evalue": 1e-5,
+        "no_concurrent": default_no_concurrent,
+        "debug": default_debug,
+        "input_type": "prot",
+        "valid_input_types": ["prot", "cds"],
+    },
+    "database": {
+        "db": "all",
+        "db_dir": None,
+        "cores": min(4, usable_cores),
+        "debug": default_debug,
+    },
+    "genome": {
+        "valid_sources": ["RefSeq", "GenBank"],
+        "assembly_level": "chromosome,complete",
+    },
+}
