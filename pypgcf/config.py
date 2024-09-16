@@ -29,7 +29,7 @@ software_defaults = {
         "kmer": 16,
         "fraglen": 3000,
         "minfrac": 0.2,
-        "mcl_inflation": 2,
+        "inflation": 2,
         "debug": default_debug,
     },
     "orthologues": {
@@ -103,7 +103,7 @@ software_defaults = {
         "cores": min(4, usable_cores),
         "debug": default_debug,
     },
-    "genome": {
+    "download": {
         "valid_sources": ["RefSeq", "GenBank"],
         "assembly_level": "chromosome,complete",
     },

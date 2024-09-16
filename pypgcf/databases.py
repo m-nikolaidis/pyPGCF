@@ -117,7 +117,7 @@ class VF_installer:
 
 
 class AMR_installer:
-    def __init__(self, database_dir: Union[None, Path], debug: bool):
+    def __init__(self, *, database_dir: Union[None, Path], debug: bool):
         if database_dir is None:
             self.database_dir = DB_BASE_DIR / "AMR"
         else:
@@ -223,7 +223,7 @@ class SMBGC_installer:
         self.database_dir.mkdir(exist_ok=True, parents=True)
         self.debug = debug
 
-    def install_database(self):
+    def install_database(self) -> None:
         print("Downloading databases of antiSMASH")
         cmd = "download-antismash-databases"
         if self.database_dir is not None:
@@ -240,9 +240,11 @@ class SMBGC_installer:
         with open(self.database_dir / "log.txt", "w") as wf:
             wf.write(f"# Database downloaded and built: {build_date}{linesep}")
 
+        return None
+
 
 class EGGNOG_installer:
-    def __init__(self, database_dir: Union[None, Path] = None, debug: bool = False):
+    def __init__(self, *, database_dir: Union[None, Path] = None, debug: bool = False):
         self.debug = debug
         if database_dir is None:
             self.database_dir = DB_BASE_DIR / "site-packages" / "data"
@@ -250,7 +252,7 @@ class EGGNOG_installer:
             self.database_dir = database_dir / "eggNOG"
         self.database_dir.mkdir(exist_ok=True, parents=True)
 
-    def install_database(self):
+    def install_database(self) -> None:
         cmd = f"download_eggnog_data.py --data_dir {self.database_dir} -y"
         if not self.debug:
             cmd += " -q"
@@ -265,3 +267,5 @@ class EGGNOG_installer:
         build_date = datetime.now().strftime("%D")
         with open(self.database_dir / "log.txt", "w") as wf:
             wf.write(f"# Database downloaded and built: {build_date}{linesep}")
+
+        return None
