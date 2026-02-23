@@ -2,7 +2,7 @@
 # By M. Nikolaidis
 
 from multiprocessing import cpu_count
-from sys import platform as platform
+from sys import platform 
 import sysconfig
 from pathlib import Path
 
@@ -10,7 +10,7 @@ DB_BASE_DIR = Path(sysconfig.get_config_var("BINLIBDEST")) / "site-packages"
 TEST_DATA_DIR = Path(__file__).parent / ".." / "test_data/"
 
 system_cores = cpu_count()
-usable_cores = system_cores
+usable_cores = system_cores - 2
 default_no_concurrent = False
 default_debug = False
 
@@ -30,6 +30,7 @@ software_defaults = {
         "fraglen": 3000,
         "minfrac": 0.2,
         "inflation": 2,
+        "prefix":"C",
         "debug": default_debug,
     },
     "orthologues": {
