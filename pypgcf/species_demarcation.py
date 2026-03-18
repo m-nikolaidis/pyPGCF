@@ -20,6 +20,7 @@ class SpeciesDemarcator:
         minfrac: float,
         inflation: float,
         mcl_cores: int,
+        cluster_prefix: str,
         debug: bool = False,
     ):
         self.in_dir = in_dir
@@ -30,6 +31,7 @@ class SpeciesDemarcator:
         self.minfrac = minfrac
         self.inflation = inflation
         self.mcl_cores = mcl_cores
+        self.cluster_prefix = cluster_prefix
         self.debug = debug
 
     def create_directories(self):
@@ -119,7 +121,7 @@ class SpeciesDemarcator:
             clust_num += 1
         df = dict_to_dataframe(results)
         df.columns = ["ClustNum"]
-        df["FastANI_species"] = df["ClustNum"].apply(lambda x: "C" + str(x))
+        df["FastANI_species"] = df["ClustNum"].apply(lambda x: self.cluster_prefix + str(x))
         df = df.drop("ClustNum", axis=1)
         df.index.name = "Genome"
         df.index = [idx.split("/")[-1] for idx in df.index]
