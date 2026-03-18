@@ -5,19 +5,24 @@ from typing import Union
 from Bio import AlignIO, SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from numpy import nan as np_nan
 from pandas import read_csv
 from tqdm import tqdm
 
-from pypgcf.utils import recursive_unlink, multiprocess_dispatch, execute_command
+from pypgcf.utils import (
+    recursive_unlink,
+    multiprocess_dispatch,
+    execute_command,
+    calc_avail_dispatchers,
+)
 
 
 class Phylogenomic:
     def __init__(
         self,
         *,
-        orthology_matrix_f: Path,
+        orthology_matrix_in: Path,
         cores: int,
+        available_cores: int,
         fasta_files_list: list[Path],
         out_dir: Path,
         no_keep_fasta: bool,
@@ -26,7 +31,7 @@ class Phylogenomic:
         input_type: str,
         debug: bool = False,
     ):
-        self.orthology_matrix_f = orthology_matrix_f
+        self.orthology_matrix_in = orthology_matrix_in
         self.out_dir = out_dir / "Phylogenomic_tree"
         self.og_fasta_dir = self.out_dir / "OGs_fasta"
         self.og_fasta_dir_aln = self.out_dir / "OGs_fasta_aln"
@@ -43,10 +48,16 @@ class Phylogenomic:
         else:
             self.tree_model = iqtree_model
 
+            self.concurrent_jobs = calc_avail_dispatchers(
+                available_cores, cores, avoid_throttle=True
+            )
+        if self.concurrent_jobs == 0:
+            self.concurrent_jobs = 1
+
     def load_orthology_matrix(self) -> None:
-        orthology_matrix = read_csv(self.orthology_matrix_f, sep="\t", index_col=0)
+        orthology_matrix = read_csv(self.orthology_matrix_in, sep="\t", index_col=0)
         columns = set(orthology_matrix.columns.tolist())
-        genomes_to_keep = []
+        genomes_to_keep: list = []
         self.ref = orthology_matrix.index.name
 
         # Filter unecessary genomes from orthology matrix
@@ -56,13 +67,18 @@ class Phylogenomic:
                 continue
             if genome not in columns:
                 continue
-            genomes_to_keep.apppend(genome)
+            genomes_to_keep.append(genome)
+
+        if self.debug:
+            print(
+                f"Num of genomes to keep: {len(genomes_to_keep)}. Num fasta files: {len(self.fasta_files)}"
+            )
 
         if len(genomes_to_keep) == 0:
             raise RuntimeError(
                 "Phylogenomic: The orthology matrix doesn't contain orthologues from any provided organisms. Please check the names of the fasta files or the input matrix "
             )
-        if len(genomes_to_keep) - 1 != len(self.fasta_files):
+        if len(genomes_to_keep) + 1 != len(self.fasta_files):
             raise RuntimeError(
                 "Phylogenomic: The orthology matrix doesn't contain orthologues from certain organisms"
             )
@@ -81,7 +97,7 @@ class Phylogenomic:
 
     def _replace_empty_with_na_in_orthology_matrix(self):
         self.orthology_matrix = self.orthology_matrix.map(
-            lambda x: np_nan if x == "X" else x
+            lambda x: None if x == "X" else x
         )
 
     def create_og_fasta(self):
@@ -216,7 +232,8 @@ class Phylogenomic:
             cmd = f"fasttree -lg {superalignment_file}"
         if not self.debug:
             cmd += " -quiet"
-        cmd += " > superalignment_Fasttree.nwk"
+        fout = self.out_dir / "superalignment_Fasttree.nwk"
+        cmd += f" > {fout}"
         _ = execute_command(cmd)
 
     def compute_tree_iqtree(self):
