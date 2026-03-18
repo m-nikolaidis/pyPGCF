@@ -105,18 +105,16 @@ class EggNOGRunner:
         cmds = []
         for fasta_file in self.fasta_files:
             fout = self.emapper_resdir / (fasta_file.stem + "_eggNOG_results.csv")
-            eggnog_cmd = " ".join(
-                [
-                    "emapper.py",
-                    f"--cpu {self.cores}",
-                    f"--pident {self.pident}",
-                    f"--query_cov {self.qcov}",
-                    f"--subject_cov {self.scov}",
-                    f"-o {fout}",
-                    f"-i {fasta_file}",
-                    f"--data_dir {self.database_dir}",
-                ]
-            )
+            eggnog_cmd = " ".join([
+                "emapper.py",
+                f"--cpu {self.cores}",
+                f"--pident {self.pident}",
+                f"--query_cov {self.qcov}",
+                f"--subject_cov {self.scov}",
+                f"-o {fout}",
+                f"-i {fasta_file}",
+                f"--data_dir {self.database_dir}",
+            ])
             if self.nucl:
                 eggnog_cmd += " --itype CDS --translate"
             if not self.debug:
@@ -173,6 +171,7 @@ class EggNOGParser:
             logging.info(
                 f"Initialized EggNOGParser with {len(fasta_files_list)} fasta files."
             )
+        return None
 
     # TODO: Need to figure out how to pre-gather the emapper results csv files and match the fasta files
     # then output a warning if the results for a certain fasta file are not found currently the error would stop the execution of the programm.
@@ -307,6 +306,7 @@ class EggNOGParser:
         self.fingerprint_protein_cog_counts = (
             self.calculate_cog_category_counts_per_proteome(fingerprint_protein_data)
         )
+        return None
 
     def _get_protein_subsets_from_core_prot_df(self, df: DataFrame) -> tuple:
         """
@@ -442,6 +442,7 @@ class EggNOGParser:
         )
         fout = self.out_dir / "COG_categories_of_proteomes.xlsx"
         self.write_counts_dictionary_to_excel(self.proteome_cog_counts, fout)
+        return None
 
     def compare_proteome_to_core_and_fps(self):
         logging.info(
@@ -455,8 +456,8 @@ class EggNOGParser:
         hypergeom_results = self.compare_core_and_fingerprints_against_background()
         fout = self.out_dir / "eggNOG_hypergeometric.xlsx"
         self.write_hypergeometric_dfs(fout, hypergeom_results)
+        return None
 
-    # #
     # # def compare_proteome_to_core_and_fps(self):
     # #     print(f"Parsing results: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
     # #     total_data = {"core": [], "fingerprint": []}
