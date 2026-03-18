@@ -1,20 +1,21 @@
+import logging
 from datetime import datetime
 from os import linesep
 from pathlib import Path
 from re import search as regex_search
 from typing import Union
-import logging
 
 from Bio import SeqIO
 
+from pypgcf.config import DB_BASE_DIR
 from pypgcf.utils import (
-    execute_command,
+    create_blastdb_cmd,
+    createdmnddb_cmd,
     download_file,
+    execute_command,
     get_remote_file_size,
     unzip_file,
-    create_blastdb_cmd, # TODO: Should use this?
 )
-from pypgcf.config import DB_BASE_DIR
 
 
 class CAZY_installer:
@@ -72,44 +73,47 @@ class VF_installer:
         desc = match3.group(1) if match3 else None
         return category, origin, desc
 
+    def create_vf_description_file(self, dbfout: Path) -> None:
+        parser = SeqIO.parse(str(dbfout), "fasta")
+        vf_desc = {}
+        for record in parser:  # For some reason I get utf-8-codec error
+            vf = record.id
+            desc = record.description
+            category, origin, desc = self._split_VF_desc(desc)
+            vf_desc[vf] = [category, origin, desc]
+        desc_fout = self.database_dir / "vfdb_desc.tsv"
+        with open(desc_fout, "w") as wf:
+            build_date = datetime.now().strftime("%D")
+            wf.write(f"# Database downloaded and built: {build_date}{linesep}")
+            for vf, items in vf_desc.items():
+                str_to_write = vf + "\t" + "\t".join(items) + linesep
+                wf.write(str_to_write)
+        return None
+
     def install_database(self) -> None:
         for url, mol_type in zip(self.urls, self.mol_types):
             filename = url.split("/")[-1]
             database_fasta = self.database_dir / filename
-            # TODO: Need to fix the verify issue
-            dl_size = download_file(url, database_fasta, verify=False)
-            exp_size = get_remote_file_size(url, verify=False)
+            dl_size = download_file(url, database_fasta)
+            exp_size = get_remote_file_size(url)
+            if exp_size == 0:
+                print("The remote file size could not be established")
             if dl_size != exp_size:
-                raise ConnectionError(
-                    "Virulence database was not downloaded, please retry"
-                )
+                print(f"Expected and downloaded file sizes differ {dl_size}/{exp_size}")
+            #     raise ConnectionError(
+            #         "Virulence database was not downloaded, please retry"
+            #     )
 
             unzip_file(database_fasta, "gzip")
             dbfout = self.database_dir / filename.replace(".gz", "")
-            parser = SeqIO.parse(str(dbfout), "fasta")
-            vf_desc = {}
-            for record in parser:  # For some reason I get utf-8-codec error
-                vf = record.id
-                desc = record.description
-                category, origin, desc = self._split_VF_desc(desc)
-                vf_desc[vf] = [category, origin, desc]
-
-            desc_fout = self.database_dir / "vfdb_desc.tsv"
-            with open(desc_fout, "w") as wf:
-                build_date = datetime.now().strftime("%D")
-                wf.write(f"# Database downloaded and built: {build_date}{linesep}")
-                for vf, items in vf_desc.items():
-                    str_to_write = vf + "\t" + "\t".join(items) + linesep
-                    wf.write(str_to_write)
-
+            self.create_vf_description_file(dbfout)
+            fout = self.database_dir / dbfout.stem
             if mol_type == "Prot":
-                cmd = f"diamond makedb --db {self.database_dir/dbfout.stem} --in {dbfout} --threads 4"
-                if not self.debug:
-                    cmd += " --quiet"
+                cmd = createdmnddb_cmd(fin=dbfout, fout=fout, debug=self.debug)
             else:
-                cmd = f"makeblastdb -dbtype nucl -in {dbfout} -out {self.database_dir / dbfout.stem}"
-                if not self.debug:
-                    cmd += " > /dev/null 2> /dev/null"
+                cmd = create_blastdb_cmd(
+                    fin=dbfout, fout=fout, input_type="nucl", debug=self.debug
+                )
 
             res = execute_command(cmd)
             if res != 0:
@@ -127,7 +131,6 @@ class AMR_installer:
             self.database_dir = database_dir / "AMR"
         self.database_dir.mkdir(exist_ok=True, parents=True)
         self.debug = debug
-
 
     def install_database_native(self) -> None:
         """

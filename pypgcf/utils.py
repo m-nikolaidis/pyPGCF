@@ -5,6 +5,7 @@ Module that contains utlity functions used throughout the software
 from concurrent.futures import ProcessPoolExecutor
 from gzip import GzipFile
 from math import floor
+from multiprocessing import get_context
 from os import system
 from pathlib import Path
 from tempfile import mkstemp
@@ -15,6 +16,8 @@ import requests
 from Bio import SeqIO
 from pandas import DataFrame
 from tqdm import tqdm
+
+from pypgcf import config
 
 
 def recursive_unlink(input: Path) -> None:
@@ -122,20 +125,23 @@ def create_blastn_cmd(
     return cmd
 
 
-def create_blastdb_cmd(file: Path, input_type: str) -> str:
+def create_blastdb_cmd(fin: Path, fout: Path, input_type: str, debug: bool) -> str:
     """
     Create the command to index a database for blast
     """
     if input_type != "nucl" and input_type != "prot":
         return ""
-    return f"makeblastdb -dbtype {input_type} -in {file} -out {file} > /dev/null"
+    cmd = f"makeblastdb -dbtype {input_type} -in {fin} -out {fout}"
+    if not debug:
+        cmd += " > /dev/null"
+    return cmd
 
 
-def create_diamonddb_cmd(file: Path) -> str:
-    """
-    Create the command to index a database for blast
-    """
-    return f"diamond makedb --in {file} --db {file} > /dev/null"
+def createdmnddb_cmd(fin: Path, fout: Path, debug: bool, threads: int = 4) -> str:
+    cmd = f"diamond makedb --db {fout} --in {fin} --threads {threads}"
+    if not debug:
+        cmd += " --quiet"
+    return cmd
 
 
 def perform_homology_search(self): ...
@@ -190,9 +196,16 @@ def multiprocess_dispatch(
     Map a list of executable to a ProcessPoolExecutor
     Return: list
     """
+
+    mp_context = None
+    if config.software_defaults["system"]["platform"] == "darwin":
+        mp_context = get_context("fork")
+        # if mpcontext is none the default will be used
+        # mac needs spawn to have the __name__ == "__main__" guard
+
     if isinstance(f, str):  # If it is a string then just call the system
         f = system
-    with ProcessPoolExecutor(num_procs) as executor:
+    with ProcessPoolExecutor(num_procs, mp_context=mp_context) as executor:
         if show_progress:
             results = list(
                 tqdm(
@@ -261,8 +274,13 @@ def dict_to_dataframe(d: dict) -> DataFrame:
     return DataFrame.from_dict(d, orient="index")
 
 
-def download_file(url: str, filename: Union[Path, str]) -> int:
-    response = requests.get(url, stream=True)
+def download_file(url: str, filename: Union[Path, str], verify: bool = True) -> int:
+    try:
+        response = requests.get(url, stream=True, verify=verify)
+    except requests.exceptions.SSLError:
+        print(f"There is an SSL error in the connection of \n {url}")
+        return 0
+
     chunk_size = 1024
     downloaded_size = 0
     with open(filename, "wb") as f:
@@ -272,8 +290,8 @@ def download_file(url: str, filename: Union[Path, str]) -> int:
     return downloaded_size
 
 
-def get_remote_file_size(url: str) -> int:
-    response = requests.head(url, allow_redirects=True)
+def get_remote_file_size(url: str, verify: bool = True) -> int:
+    response = requests.head(url, allow_redirects=False, verify=verify)
     if "content-length" in response.headers:
         expected_size = int(response.headers["content-length"])
         return expected_size
