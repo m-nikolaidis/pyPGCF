@@ -65,7 +65,7 @@ class Orthologues_identifier:
         makeblastdb_bin = "makeblastdb"
 
         self.blast_bin = diamond_bin
-        if self.input_type == "CDS":
+        if self.input_type == "cds":
             self.blast_bin = blastn_bin
             self.blast_db_bin = makeblastdb_bin
 
@@ -79,7 +79,7 @@ class Orthologues_identifier:
             database_f = self.blast_db_dir / fasta_file.stem
             cmd = f"{self.blast_bin} makedb --in {fasta_file} --quiet --db {database_f} --threads {self.blast_cores}"  # DIAMOND
             if self.input_type == "CDS":
-                cmd = f"{self.blast_db_bin} -in {fasta_file} -dbtype nucl -out {database_f}"
+                cmd = f"{self.blast_db_bin} -in {fasta_file} -dbtype nucl -out {database_f} > /dev/null"  
             execute_command(cmd)
 
     def _create_blast_cmd(
@@ -321,7 +321,7 @@ class Orthologues_identifier:
         self.create_blast_db()
         for idx, ref in enumerate(refs):
             if idx > 0:
-                print("-" * 200)
+                print("-" * 100)
             print(
                 f"Calulating orthologues with reference {ref}: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
             )
