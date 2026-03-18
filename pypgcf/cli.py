@@ -98,6 +98,13 @@ def add_species_demarcation_subparser(subparsers):
         "-o", metavar="out", help="Output directory", required=True
     )
     species_demarcation_basic.add_argument(
+        "--prefix",
+        metavar="prefix",
+        help="species cluster prefix",
+        default=software_defaults["species_demarcation"]["prefix"],
+        type=str,
+    )
+    species_demarcation_basic.add_argument(
         "--debug", help="Used for debugging purposes", action="store_true"
     )
 
@@ -598,6 +605,7 @@ def run_species_demarcation(args):
     fastani_cores = args["fastani_cores"]
     debug = args["debug"]
     kmer = int(args["kmer"])
+    prefix = str(args["prefix"])
     fraglen = int(args["fraglen"])
     minfraction = float(args["minfraction"])
     inflation = float(args["inflation"])
@@ -611,6 +619,7 @@ def run_species_demarcation(args):
         minfrac=minfraction,
         inflation=inflation,
         mcl_cores=mcl_cores,
+        cluster_prefix=prefix,
         debug=debug,
     )
     demarcator.assign_species()
@@ -689,6 +698,7 @@ def run_phylogenomic(args):
     phylogenomic = Phylogenomic(
         orthology_matrix_in=og_matrix_in,
         cores=cores,
+        available_cores=software_defaults["system"]["usable_cores"],
         fasta_files_list=fasta_files,
         out_dir=out_dir,
         no_keep_fasta=no_keep_fasta,
@@ -889,8 +899,6 @@ def run_amr(args):
 
 def run_download(args):
     out_dir = Path(args["out"])
-    if not validate_directory(out_dir):
-        return
     taxon = args["taxon"]
     debug = args["debug"]
     downloader = GenomeDownloader(
@@ -902,9 +910,10 @@ def run_download(args):
         debug=debug,
     )
     logging.info(f"Starting download: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+    downloader.create_output_directories()
     downloader.download_hydrated()
     downloader.extract_dataset_zip()
-    downloader.create_output_directories()
+    downloader.save_gbff_dir_to_memory()
     downloader.process_gbff_files()
     downloader.write_annotations()
     downloader.write_16S_fasta()
@@ -929,6 +938,7 @@ def run_download(args):
             minfrac=software_defaults["species_demarcation"]["minfrac"],
             inflation=software_defaults["species_demarcation"]["inflation"],
             mcl_cores=software_defaults["species_demarcation"]["cores"],
+            cluster_prefix=software_defaults["species_demarcation"]["prefix"],
             debug=debug,
         )
         demarcator.assign_species()
@@ -943,8 +953,8 @@ def run_download(args):
 
 
 def run_databases(args):
-    db_value = args["db"]
-    database_dir = args["db_dir"]
+    db_value = args["install"]
+    database_dir = Path(args["database_dir"])
     debug = args["debug"]
     cores = args["cores"]
     if "all" in db_value and db_value != "all":
@@ -956,7 +966,6 @@ def run_databases(args):
     else:
         databases_to_install = db_value.split(",")
 
-    print(databases_to_install)
     for database in databases_to_install:
         if database == "smbgc":
             smbgc = SMBGC_installer(database_dir=database_dir, debug=debug)
@@ -996,9 +1005,19 @@ def run_workflow(args):
 
     # Identify which tasks the user wants to run
     workflow_runner.identify_tasks()
+    workflow_runner.validate_co_dependent_tasks()
 
     # Update the parameters of each task using the parameters file
     input_type = workflow_runner.params.get("CDS_or_proteins")
+    if input_type not in ["Proteins", "CDS"]:
+        raise ValueError("CDS_or_proteins accepts only Proteins or CDS")
+    if input_type == "Proteins":
+        input_type = "prot"
+    else:
+        input_type = "cds"
+
+    # Gather the proteomes list
+    workflow_runner.load_input_genomes_or_proteomes_list()
 
     # Gather the fasta files that will be used
     workflow_runner.gather_cds_or_protein_fasta_files()
@@ -1009,14 +1028,19 @@ def run_workflow(args):
     # workflow_runner.cds_or_protein_fasta_files_representatives
     # workflow_runner.genomic_fasta_files_representatives
 
-    for task in workflow_runner.tasks:
+    for task, run_status in workflow_runner.tasks_to_execute.items():
+        if run_status is False:
+            continue
+        logging.info(f"Running: {task}")
+        logging.info("-" * 50)
         if task == "Calculate_orthologues":
+            workflow_runner.create_orthologues_ref_list()
             module = "orthologues"
             arguments[module]["fasta_files"] = (
                 workflow_runner.cds_or_protein_fasta_files
             )
             arguments[module]["ref"] = None
-            arguments[module]["ref_list"] = workflow_runner.orthologues_ref_list
+            arguments[module]["ref_list"] = workflow_runner.orthologues_ref_list_file
             arguments[module]["input_type"] = input_type
             run_orthologues(arguments[module])
 
@@ -1033,11 +1057,11 @@ def run_workflow(args):
             for runtype in ["whole", "groups"]:
                 if runtype == "whole":
                     arguments[module]["ref_list"] = (
-                        workflow_runner.core_whole_set_ref_list
+                        workflow_runner.core_whole_set_ref_list_file
                     )
                     arguments[module]["species"] = None
                 else:
-                    arguments[module]["ref_list"] = workflow_runner.core_ref_list
+                    arguments[module]["ref_list"] = workflow_runner.core_ref_list_file
                     arguments[module]["species"] = workflow_runner.core_species_file
                 run_core(arguments[module])
 
@@ -1094,7 +1118,7 @@ def run_workflow(args):
             # Get the core protein and fingerprint excel files
             workflow_runner.create_eggnog_core_protein_files_list()
             arguments[module]["in_list"] = (
-                workflow_runner.emapper_core_protein_files_reflist
+                workflow_runner.emapper_core_protein_files_reflist_file
             )
             run_eggnog(arguments[module])
 
