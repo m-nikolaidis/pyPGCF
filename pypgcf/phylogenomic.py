@@ -5,14 +5,15 @@ from typing import Union
 from Bio import AlignIO, SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from itaxotools.pygblocks import Options, compute_mask, trim_sequence
 from pandas import read_csv
 from tqdm import tqdm
 
 from pypgcf.utils import (
-    recursive_unlink,
-    multiprocess_dispatch,
-    execute_command,
     calc_avail_dispatchers,
+    execute_command,
+    multiprocess_dispatch,
+    recursive_unlink,
 )
 
 
@@ -141,16 +142,14 @@ class Phylogenomic:
         orthologous_groups_files = list(self.og_fasta_dir.glob("*"))
         commands = []
         for file in orthologous_groups_files:
-            cmd = " ".join(
-                [
-                    "muscle",
-                    "-in",
-                    str(file),
-                    "-out",
-                    str(self.og_fasta_dir_aln / file.name),
-                    "-quiet",
-                ]
-            )
+            cmd = " ".join([
+                "muscle",
+                "-in",
+                str(file),
+                "-out",
+                str(self.og_fasta_dir_aln / file.name),
+                "-quiet",
+            ])
             commands.append(cmd)
         _ = multiprocess_dispatch(
             "system",
@@ -188,8 +187,6 @@ class Phylogenomic:
         for aln_file in tqdm(
             aln_files, desc="Joining orthologous groups", ascii=True, leave=True
         ):
-            # aln_records = SeqIO.to_dict(AlignIO.read(str(aln_file), "fasta"))
-            # aln_records = {records.description : aln_records[records] for records in aln_records} # Rename the keys, need to use the org name
             parser = SeqIO.parse(str(aln_file), "fasta")
             aln_records = {
                 record.description.replace(record.name + " ", ""): record
@@ -206,14 +203,22 @@ class Phylogenomic:
 
     def filter_superalignment(self):
         """Filter the superalignment using Gblocks with default parameters"""
-        cmd = " ".join(
-            ["Gblocks", str(self.out_dir / "superalignment.fa"), "-s=y -e=-gb -p=y"]
+        aln = AlignIO.read(self.out_dir / "superalignment.fa", "fasta")
+        options = Options(
+            IS=9,  # Minimum Number Of Sequences For A Conserved Position
+            FS=14,  # Minimum Number Of Sequences For A Flank Position
+            CP=8,  # Maximum Number Of Contiguous Nonconserved Positions
+            BL1=10,  # Minimum Length Of A Block, 1st iteration
+            BL2=10,  # Minimum Length Of A Block, 2nd iteration
+            GT=0,  # Maximum Number of Allowed Gaps For Any Position
+            GC="-",  # Definition of Gap Characters
         )
-        # TODO: Should I make this less strict for default?
-        # TODO: Add options in module help
-        _ = execute_command(cmd)
-        htm_file = self.out_dir / "superalignment.fa-gb.htm"
-        htm_file.unlink()
+        mask = compute_mask((record.seq for record in aln), options)
+        for record in aln:
+            record.seq = Seq(trim_sequence(record.seq, mask))
+        with open(self.out_dir / "superalignment.fa-gb", "w") as wf:
+            AlignIO.write(aln, wf, "fasta")
+        return None
 
     def compute_tree_bionj(self):
         """
