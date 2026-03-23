@@ -409,6 +409,9 @@ def add_download_subparser(subparsers):
         choices=software_defaults["download"]["valid_sources"],
     )
     download.add_argument(
+        "--limit_to_ref", help="Limit to reference genomes", action="store_true"
+    )
+    download.add_argument(
         "--level",
         help="Assembly level of genomes [available options: contig, scaffold, chromosome, complete]",
         default=software_defaults["download"]["assembly_level"],
@@ -907,6 +910,7 @@ def run_download(args):
         assembly_level=args["level"],
         assembly_source=args["source"],
         keep_plasmids=args["keep_plasmids"],
+        limit_to_ref=args["limit_to_ref"],
         debug=debug,
     )
     logging.info(f"Starting download: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")

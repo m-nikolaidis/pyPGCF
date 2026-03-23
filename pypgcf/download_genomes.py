@@ -47,6 +47,7 @@ class GenomeDownloader:
         assembly_level: str = "chromosome,complete",
         assembly_source: str = "RefSeq",
         keep_plasmids: bool = True,
+        limit_to_ref: bool = False,
         debug: bool = False,
     ):
         self.taxon = taxon
@@ -61,15 +62,15 @@ class GenomeDownloader:
         self.datasetzip_filename = self.out_dir / "dataset.zip"
 
     def download_hydrated(self):
-        cmd = " ".join(
-            [
-                "datasets download genome taxon",
-                str(self.taxon),
-                "--include gbff",
-                f"--assembly-level {self.assembly_level}",
-                f"--assembly-source {self.assembly_source} --filename {self.out_dir}/dataset.zip",
-            ]
-        )
+        cmd = " ".join([
+            "datasets download genome taxon",
+            str(self.taxon),
+            "--include gbff",
+            f"--assembly-level {self.assembly_level}",
+            f"--assembly-source {self.assembly_source} --filename {self.out_dir}/dataset.zip",
+        ])
+        if self.limit_to_ref:
+            cmd += " --reference"
         if self.debug:
             cmd += " --preview"
         res = utils.execute_command(cmd)
