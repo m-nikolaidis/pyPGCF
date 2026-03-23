@@ -1,0 +1,48 @@
+package:
+  name: pypgcf
+  version: "2.0.0"
+
+source:
+  path: .
+
+build:
+  script: 
+    - $PYTHON -m pip install --no-deps --no-build-isolation .
+
+requirements:
+  host:
+    - python ==3.11
+    - pip
+    - hatchling ==1.26.3
+  run:
+    - python ==3.11
+    - iqtree >=3.0.1,<4
+    - muscle ==3.8.1551
+    - eggnog-mapper ==2.1.13
+    - fastani >=1.34,<2
+    - mcl >=22.282,<23
+    - dbcan >=5.2.8,<6
+    - ncbi-amrfinderplus >=3.12.8,<5
+    - antismash >=8.0.4,<9
+    - pip-system-certs >=5.3,<6
+    - ncbi-datasets-cli >=18.21.0,<19
+    - pandas>=3.0.1,<4
+    - openpyxl>=3.1.5,<4
+    - tqdm>=4.67.3,<5
+    - requests>=2.32.5,<3
+    - biopython>=1.8,<2
+
+tests:
+  - requirements:
+      run:
+        - pytest >=7.0
+        - pytest-cov >=4.0
+        - pytest-mock >=3.0
+        - black >=22.0
+        - flake8 >=5.0
+        - mypy >=1.0
+    script:
+      - python -c "import pypgcf"
+      - python -c "from pypgcf._vendor.pygblocks import Options, compute_mask, trim_sequence"
+      - python -c "from pypgcf.cli import main"
+      - pyPGCF -h

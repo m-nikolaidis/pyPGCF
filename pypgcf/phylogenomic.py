@@ -5,7 +5,7 @@ from typing import Union
 from Bio import AlignIO, SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from itaxotools.pygblocks import Options, compute_mask, trim_sequence
+from pypgcf._vendor.pygblocks import Options, compute_mask, trim_sequence
 from pandas import read_csv
 from tqdm import tqdm
 
@@ -15,6 +15,9 @@ from pypgcf.utils import (
     multiprocess_dispatch,
     recursive_unlink,
 )
+
+# from itaxotools.pygblocks import Options, compute_mask, trim_sequence
+# Revert this when the itaxotools recipe is created
 
 
 class Phylogenomic:

@@ -23,6 +23,9 @@ The tool consists of 6 modules with each one devoted to one specific analysis as
 Currently installation is only available through the conda or mamba environment managers.  
 If you don't have mamba installed just replace the word 'mamba' with 'conda'.  
 
+Using global pixi:
+pixi global install --path pypgcf-2.0.0-h60d57d3_0.conda --channel conda-forge --channel bioconda
+
 First create a virtual environment with python 3.9:  
 `mamba create -n pyPGCF python=3.9`  
 
