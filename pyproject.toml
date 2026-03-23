@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pypgcf"
-version = "2.0.0"
+version = "2.0.1"
 description = "pyPGCF: PhyloGenomic, Core and Fingerprint analyses package"
 authors = [
       {name = "Marios Nikolaidis", email = "marionik23@gmail.com"}
