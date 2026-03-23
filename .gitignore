@@ -8,5 +8,12 @@ archives/*
 data/
 data/*
 tmp/*
+builds
+builds/*
+./test_data
+.DS_Store
 
 TODO.md
+# pixi environments
+.pixi/*
+!.pixi/config.toml
