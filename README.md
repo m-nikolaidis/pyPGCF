@@ -24,7 +24,7 @@ Currently installation is only available through the conda or mamba environment 
 If you don't have mamba installed just replace the word 'mamba' with 'conda'.  
 
 Using global pixi:
-pixi global install --path pypgcf-2.0.0-h60d57d3_0.conda --channel conda-forge --channel bioconda
+pixi global install --path pypgcf-2.0.0-h60d57d3_0.conda --channel conda-forge --channel bioconda --environment pypgcf
 
 First create a virtual environment with python 3.9:  
 `mamba create -n pyPGCF python=3.9`  
