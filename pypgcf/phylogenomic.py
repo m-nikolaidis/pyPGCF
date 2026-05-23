@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from tempfile import mkstemp
 from typing import Union
 
 from Bio import AlignIO, SeqIO
@@ -14,10 +15,15 @@ from pypgcf.utils import (
     execute_command,
     multiprocess_dispatch,
     recursive_unlink,
+    translate_fasta_records,
+    seqrecords_to_fasta,
+    create_temporary_file,
 )
 
 # from itaxotools.pygblocks import Options, compute_mask, trim_sequence
 # Revert this when the itaxotools recipe is created
+
+# TODO: If input type is CDS we need to translate before feeding to muscle and matching back
 
 
 class Phylogenomic:
@@ -136,7 +142,6 @@ class Phylogenomic:
                 fout_handle = open(fout, "a")
                 SeqIO.write(info, fout_handle, "fasta")
                 fout_handle.close()
-            # TODO: If input type is CDS we need to translate before feeding into muscle
 
     def align_orthologous_groups_fasta(self) -> None:
         """
@@ -145,14 +150,16 @@ class Phylogenomic:
         orthologous_groups_files = list(self.og_fasta_dir.glob("*"))
         commands = []
         for file in orthologous_groups_files:
-            cmd = " ".join([
-                "muscle",
-                "-in",
-                str(file),
-                "-out",
-                str(self.og_fasta_dir_aln / file.name),
-                "-quiet",
-            ])
+            cmd = " ".join(
+                [
+                    "muscle",
+                    "-in",
+                    str(file),
+                    "-out",
+                    str(self.og_fasta_dir_aln / file.name),
+                    "-quiet",
+                ]
+            )
             commands.append(cmd)
         _ = multiprocess_dispatch(
             "system",
@@ -246,10 +253,10 @@ class Phylogenomic:
 
     def compute_tree_iqtree(self):
         """
-        Compute the phylogenomic tree using IQtree2
+        Compute the phylogenomic tree using IQtree3
         """
         superalignment_file = self.out_dir / "superalignment.fa-gb"
-        cmd = "iqtree2 -m {} -merit AIC --alrt 1000 -T {} -s {}".format(
+        cmd = "iqtree3 -m {} -merit AIC --alrt 1000 -T {} -s {}".format(
             self.tree_model, self.cores, superalignment_file
         )
         if not self.debug:
@@ -261,7 +268,7 @@ class Phylogenomic:
         for f in files:
             renamed = self.iqtree_results_dir / f.name
             if f.suffix == ".treefile":
-                renamed = self.out_dir / "superalignment_IQTree2.nwk"
+                renamed = self.out_dir / "superalignment_IQTree.nwk"
             f.rename(renamed)
 
     def clean_fasta_files(self):
