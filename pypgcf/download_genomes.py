@@ -60,6 +60,7 @@ class GenomeDownloader:
         self.plasmids_per_genome = {}
         self.rrna_16S_records = {}
         self.datasetzip_filename = self.out_dir / "dataset.zip"
+        self.limit_to_ref = limit_to_ref
 
     def download_hydrated(self):
         cmd = " ".join([
