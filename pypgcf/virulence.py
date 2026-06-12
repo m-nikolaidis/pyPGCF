@@ -82,7 +82,7 @@ class VF_analyzer:
     def execute_homology_search(self) -> None:
         cmds = []
         outdir = self.results_dir / "homology_search"
-        outdir.mkdir(exist_ok=True)
+        outdir.mkdir(exist_ok=True, parents=True)
         for query_file in self.fasta_files:
             outfile = outdir / (query_file.stem + ".txt")
             if self.protein:
@@ -122,7 +122,7 @@ class VF_analyzer:
         dfs = [None] * len(files)
         for idx, f in tqdm(enumerate(files), desc="Parsing VF results"):
             df = pd.read_csv(f, sep="\t", names=self.column_names)
-            df = keep_best_homology_hit(df)
+            df = keep_best_homology_hit(df, group_col="qseqid")
             mask = (df["qcovhsp"] >= 50) & (
                 df["pident"] >= 50
             )  # Get hits 50% identical over 50% of length
@@ -133,13 +133,15 @@ class VF_analyzer:
 
         # Add VF annotation
         vf_desc = self._read_vf_desc_filt()
-        total_df["VF_Category"] = total_df["qseqid"].map(
+        total_df["VF_Category"] = total_df["sseqid"].map(
             lambda x: vf_desc[x]["VF_Category"]
         )
-        total_df["VF_Origin"] = total_df["qseqid"].map(
+        total_df["VF_Origin"] = total_df["sseqid"].map(
             lambda x: vf_desc[x]["VF_Origin"]
         )
-        total_df["VF_Desc"] = total_df["qseqid"].map(lambda x: vf_desc[x]["VF_Desc"])
+        total_df["VF_Desc"] = total_df["sseqid"].map(lambda x: vf_desc[x]["VF_Desc"])
 
         # Write to excel
-        total_df.to_excel(self.results_dir / "VF_results_50pident50qcov.xlsx")
+        total_df.to_excel(
+            self.results_dir / "VF_results_50pident50qcov.xlsx", index=False
+        )
