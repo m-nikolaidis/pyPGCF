@@ -256,7 +256,7 @@ class Phylogenomic:
         Compute the phylogenomic tree using IQtree3
         """
         superalignment_file = self.out_dir / "superalignment.fa-gb"
-        cmd = "iqtree3 -m {} -merit AIC --alrt 1000 -T {} -s {}".format(
+        cmd = "iqtree -m {} -merit AIC --alrt 1000 -T {} -s {}".format(
             self.tree_model, self.cores, superalignment_file
         )
         if not self.debug:
