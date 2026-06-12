@@ -15,6 +15,7 @@ from pypgcf.utils import (
     execute_command,
     get_remote_file_size,
     unzip_file,
+    sanitize_vfdb_file,
 )
 
 
@@ -76,7 +77,7 @@ class VF_installer:
     def create_vf_description_file(self, dbfout: Path) -> None:
         parser = SeqIO.parse(str(dbfout), "fasta")
         vf_desc = {}
-        for record in parser:  # For some reason I get utf-8-codec error
+        for record in parser:
             vf = record.id
             desc = record.description
             category, origin, desc = self._split_VF_desc(desc)
@@ -106,6 +107,7 @@ class VF_installer:
 
             unzip_file(database_fasta, "gzip")
             dbfout = self.database_dir / filename.replace(".gz", "")
+            sanitize_vfdb_file(dbfout)
             self.create_vf_description_file(dbfout)
             fout = self.database_dir / dbfout.stem
             if mol_type == "Prot":

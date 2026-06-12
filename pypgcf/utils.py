@@ -248,6 +248,26 @@ def unzip_file(file: Path, method: str) -> None:
     return None
 
 
+def sanitize_vfdb_file(file: Path) -> None:
+    """
+    VFDB fasta file contains an illegal byte character and we need to remove it
+    because it is illegal in utf-8 encoding and we will encounter issues
+    """
+    # problematic_byte = " "
+    problematic_byte = b"\xa0"
+    lines = []
+    with open(file, "rb") as rf:
+        for line in rf:
+            if b"VFG054556" in line:
+                line = line.replace(problematic_byte, b"")
+            lines.append(line)
+
+    with open(file, "wb") as wf:
+        for line in lines:
+            wf.write(line)
+    return None
+
+
 def translate_fasta_records(file: Path) -> list:
     records = []
     for item in SeqIO.parse(file, "fasta"):
@@ -275,8 +295,11 @@ def dict_to_dataframe(d: dict) -> DataFrame:
 
 
 def download_file(url: str, filename: Union[Path, str], verify: bool = True) -> int:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
     try:
-        response = requests.get(url, stream=True, verify=verify)
+        response = requests.get(url, stream=True, verify=verify, headers=headers)
     except requests.exceptions.SSLError:
         print(f"There is an SSL error in the connection of \n {url}")
         return 0
