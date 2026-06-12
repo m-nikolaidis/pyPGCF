@@ -13,6 +13,7 @@ FILETYPE_TO_DIR = {
     "cds": "CDS_fasta_files",
     "protein": "Protein_fasta_files",
     "genome": "Genomic_fasta_files",
+    "gbff": "Genbank_files",
 }
 
 GBFF_INFO_COLUMNS = [
@@ -63,13 +64,15 @@ class GenomeDownloader:
         self.limit_to_ref = limit_to_ref
 
     def download_hydrated(self):
-        cmd = " ".join([
-            "datasets download genome taxon",
-            str(self.taxon),
-            "--include gbff",
-            f"--assembly-level {self.assembly_level}",
-            f"--assembly-source {self.assembly_source} --filename {self.out_dir}/dataset.zip",
-        ])
+        cmd = " ".join(
+            [
+                "datasets download genome taxon",
+                str(self.taxon),
+                "--include gbff",
+                f"--assembly-level {self.assembly_level}",
+                f"--assembly-source {self.assembly_source} --filename {self.out_dir}/dataset.zip",
+            ]
+        )
         if self.limit_to_ref:
             cmd += " --reference"
         if self.debug:
@@ -252,6 +255,12 @@ class GenomeDownloader:
             if has_plasmid_in_source or has_plasmid_in_desc:
                 plasmids.append(record.name)
         return plasmids
+
+    def organize_gbff_files(self) -> None:
+        for genome, file in tqdm(self.gbff_files.items()):
+            new_fout = self.out_dir / FILETYPE_TO_DIR.get("gbff") / (genome + ".gbff")
+            file.replace(new_fout)
+        return None
 
     def process_gbff_files(self) -> None:
         for genome, file in tqdm(

@@ -422,8 +422,8 @@ def add_download_subparser(subparsers):
         action="store_true",
     )
     download.add_argument(
-        "--keep_download",
-        help="Keep downloaded archive",
+        "--keep_gbff",
+        help="Keep the GBFF files",
         action="store_true",
     )
     download.add_argument(
@@ -921,8 +921,9 @@ def run_download(args):
     downloader.process_gbff_files()
     downloader.write_annotations()
     downloader.write_16S_fasta()
-    if not args["keep_download"]:
-        downloader.remove_dataset_archive()
+    if args["keep_gbff"]:
+        downloader.organize_gbff_files()
+    downloader.remove_dataset_archive()
 
     if args["perform_fastani"]:
         logging.info(
