@@ -77,7 +77,7 @@ class smBGCLocalRunner:
             for cmd in tqdm(
                 commands, ascii=True, leave=True, desc="Running antiSMASH in debug mode"
             ):
-                execute_command(cmd)
+                execute_command(cmd, debug=True)
 
         else:
             _ = multiprocess_dispatch(

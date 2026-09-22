@@ -1,4 +1,5 @@
 import csv
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Generator, List, Union
@@ -40,14 +41,16 @@ class SpeciesDemarcator:
     def create_input_for_fastani(
         self, files_for_fastani: Union[List, Generator], tmp_file_for_fastani: Path
     ) -> None:
-        print("Preparing FastANI input")
+        logging.debug("Preparing FastANI input")
         with open(str(tmp_file_for_fastani), "w") as f:
             for file in files_for_fastani:
                 f.write(str(file) + "\n")
         return None
 
     def perform_fastani(self, org_list: Path, fout: Path) -> None:
-        print(f"Performing FastANI: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+        logging.debug(
+            f"Performing FastANI: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
+        )
         cmd = "fastANI --ql {} --rl {} -t {} -k {} --fragLen {} --minFraction {} -o {}".format(
             org_list,
             org_list,
@@ -57,9 +60,7 @@ class SpeciesDemarcator:
             self.minfrac,
             fout,
         )
-        if not self.debug:
-            cmd += " > /dev/null 2>&1"
-        ret = execute_command(cmd)
+        ret = execute_command(cmd, debug=self.debug)
         if ret != 0:
             raise RuntimeError("fastANI command was not successful")
         return None
@@ -92,7 +93,7 @@ class SpeciesDemarcator:
         to_rename.rename(new_name)
 
     def run_mcl(self, fastani_for_mcl: Path) -> Path:
-        print(
+        logging.debug(
             f"Running MCL clustering: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
         outdir = fastani_for_mcl.parent
@@ -102,16 +103,16 @@ class SpeciesDemarcator:
         cmds = [mcxload_cmd, mcl_cmd, mcxdump_cmd]
 
         for cmd in cmds:
-            if not self.debug:
-                cmd += " > /dev/null 2>&1"
-            ret = execute_command(cmd)
+            ret = execute_command(cmd, debug=self.debug)
             if ret != 0:
                 raise RuntimeError("Something went wrong with MCL")
         self.clean_mcl(outdir)
         return outdir / "fastANI_clusters.tsv"
 
     def parse_mcx_output(self, fastani_from_mcl: Path) -> None:
-        print(f"Parsing MCL output: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+        logging.debug(
+            f"Parsing MCL output: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
+        )
         outdir = fastani_from_mcl.parent
         results = {}
         clust_num = 0
@@ -154,4 +155,4 @@ class SpeciesDemarcator:
             raise FileNotFoundError(f"{fastani_from_mcl} was not created")
 
         self.parse_mcx_output(fastani_from_mcl)
-        print(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+        logging.debug(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")

@@ -31,12 +31,18 @@ from pypgcf.phylogenomic import Phylogenomic
 from pypgcf.smbgc import smBGCLocalRunner, smBGCParser
 from pypgcf.species_demarcation import SpeciesDemarcator
 from pypgcf.virulence import VF_analyzer
-from pypgcf.workflow import WorkflowRunner
+from pypgcf.workflow import TASK_MAP, WorkflowRunner
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+
+
+def configure_output(debug: bool = False) -> None:
+    """Configure concise output by default and detailed output for debugging."""
+    logging.basicConfig(format=LOG_FORMAT)
+    logging.getLogger().setLevel(logging.DEBUG if debug else logging.WARNING)
+
+
+configure_output()
 
 # TODO: For CLI, in order to install the databases the user should invoke
 # pyPGCF databases --install all --databse_dir ./ for all
@@ -200,6 +206,9 @@ def add_orthologues_subparser(subparsers):
     orthologues_blast.add_argument(
         "--no_filter_orthologues", help="Do not filter orthologues", action="store_true"
     )
+    orthologues_basic.add_argument(
+        "--debug", help="Show detailed diagnostic output", action="store_true"
+    )
 
 
 def add_core_subparser(subparsers):
@@ -225,6 +234,9 @@ def add_core_subparser(subparsers):
         "--core_perc",
         help="Percent presence of a protein/gene in a cluster to be considered core",
         default=software_defaults["core"]["core_perc"],
+    )
+    core.add_argument(
+        "--debug", help="Show detailed diagnostic output", action="store_true"
     )
 
 
@@ -642,7 +654,7 @@ def run_orthologues(args):
     concurrent = True
     if args["no_concurrent"]:
         concurrent = False
-    orthologues_identifier = Orthologues_identifier(
+    orthologues_options = dict(
         fasta_files_list=fasta_files,
         out_dir=out_dir,
         ref=ref,
@@ -655,6 +667,9 @@ def run_orthologues(args):
         dmnd_sensitivity=dmnd_sensitivity,
         no_filter=no_filter_orthologues,
     )
+    if args.get("debug", False):
+        orthologues_options["debug"] = True
+    orthologues_identifier = Orthologues_identifier(**orthologues_options)
     orthologues_identifier.calculate_orthologues()
 
 
@@ -1036,8 +1051,7 @@ def run_workflow(args):
     for task, run_status in workflow_runner.tasks_to_execute.items():
         if run_status is False:
             continue
-        logging.info(f"Running: {task}")
-        logging.info("-" * 50)
+        print(f"Running {TASK_MAP.get(task, task)}")
         if task == "Calculate_orthologues":
             workflow_runner.create_orthologues_ref_list()
             module = "orthologues"
@@ -1193,6 +1207,8 @@ def run_workflow(args):
 def main():
     parser = setup_parser()
     args = vars(parser.parse_args())
+    configure_output(args.get("debug", False))
+    print(f"Running {args['module']}")
 
     if args["module"] == "species_demarcation":
         run_species_demarcation(args)

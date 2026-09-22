@@ -86,7 +86,7 @@ class VF_analyzer:
         for query_file in self.fasta_files:
             outfile = outdir / (query_file.stem + ".txt")
             if self.protein:
-                cmd = create_diamond_blastp_cmd(
+                command_args = (
                     query_file,
                     self.database_file,
                     outfile,
@@ -95,6 +95,10 @@ class VF_analyzer:
                     self.cores,
                     self.outfmt,
                 )
+                if self.debug:
+                    cmd = create_diamond_blastp_cmd(*command_args, debug=True)
+                else:
+                    cmd = create_diamond_blastp_cmd(*command_args)
             else:
                 cmd = create_blastn_cmd(
                     query_file,
@@ -112,6 +116,7 @@ class VF_analyzer:
             self.concurrent_jobs,
             show_progress=True,
             description="Scanning for virulence factors",
+            debug=self.debug,
         )
         return None
 

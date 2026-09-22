@@ -45,6 +45,7 @@ TASK_MAP = {  # Map tasks to module
     "Calculate_entire_phylogenomic_tree": "phylogenomic",
     "Calculate_group_representatives_phylogenomic_tree": "phylogenomic",
     "Calculate_EGGNOG_on_Group_representatives": "eggnog",
+    "Calculate_EGGNOG_on_core/fingerprints": "eggnog",
     "Calculate_SMBGCs_on_Group_representatives": "smbgc",
     "Calculate_SMBGCs_on_entire_set": "smbgc",
     "Calculate_CAZymes_on_Group_representatives": "cazy",

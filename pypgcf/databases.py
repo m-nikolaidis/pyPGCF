@@ -33,7 +33,11 @@ class CAZY_installer:
         build_cmd = (
             f"dbcan_build --cpus {self.cores} --db-dir {self.database_dir} --clean"
         )
-        retval = execute_command(build_cmd)
+        retval = (
+            execute_command(build_cmd, debug=True)
+            if self.debug
+            else execute_command(build_cmd)
+        )
 
         build_date = datetime.now().strftime("%D")
         with open(self.database_dir / "log.txt", "w") as wf:
@@ -57,7 +61,7 @@ class VF_installer:
         self.debug = debug
 
         if self.debug:
-            print(f"VFInstaller: {self.database_dir} was created")
+            logging.debug(f"VFInstaller: {self.database_dir} was created")
 
     def _split_VF_desc(self, string: str) -> tuple:
         category_pattern = r"\[.+\) - (.+) \(.+\] \[.+$"
@@ -98,9 +102,11 @@ class VF_installer:
             dl_size = download_file(url, database_fasta)
             exp_size = get_remote_file_size(url)
             if exp_size == 0:
-                print("The remote file size could not be established")
+                logging.warning("The remote file size could not be established")
             if dl_size != exp_size:
-                print(f"Expected and downloaded file sizes differ {dl_size}/{exp_size}")
+                logging.warning(
+                    f"Expected and downloaded file sizes differ {dl_size}/{exp_size}"
+                )
             #     raise ConnectionError(
             #         "Virulence database was not downloaded, please retry"
             #     )
@@ -117,7 +123,7 @@ class VF_installer:
                     fin=dbfout, fout=fout, input_type="nucl", debug=self.debug
                 )
 
-            res = execute_command(cmd)
+            res = execute_command(cmd, debug=True) if self.debug else execute_command(cmd)
             if res != 0:
                 logging.error(
                     "Something went wrong during the build process of VF database"
@@ -143,7 +149,10 @@ class AMR_installer:
             cmd = f"amrfinder_update -d {self.database_dir} --threads 2"
         else:
             cmd = f"amrfinder_update -d {self.database_dir} --threads 2 --quiet"
-        execute_command(cmd)
+        if self.debug:
+            execute_command(cmd, debug=True)
+        else:
+            execute_command(cmd)
         return None
 
 
@@ -157,14 +166,14 @@ class SMBGC_installer:
         self.debug = debug
 
     def install_database(self) -> None:
-        print("Downloading databases of antiSMASH")
+        logging.debug("Downloading databases of antiSMASH")
         cmd = "download-antismash-databases"
         if self.database_dir is not None:
             cmd += f" --database-dir {self.database_dir}"
-        ret = execute_command(cmd)
+        ret = execute_command(cmd, debug=True) if self.debug else execute_command(cmd)
         if self.debug:
             if ret == 0:
-                print("Installed antiSMASH database successfully")
+                logging.debug("Installed antiSMASH database successfully")
             else:
                 raise RuntimeError(
                     "Something went wrong with the download of antiSMASH database"
@@ -190,10 +199,10 @@ class EGGNOG_installer:
         cmd = f"download_eggnog_data.py --data_dir {self.database_dir} -y"
         if not self.debug:
             cmd += " -q"
-        ret = execute_command(cmd)
+        ret = execute_command(cmd, debug=True) if self.debug else execute_command(cmd)
         if self.debug:
             if ret == 0:
-                print("Installed eggNOG database successfully")
+                logging.debug("Installed eggNOG database successfully")
             else:
                 raise RuntimeError(
                     "Something went wrong with the download of eggNOG database"

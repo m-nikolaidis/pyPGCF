@@ -77,7 +77,10 @@ class GenomeDownloader:
             cmd += " --reference"
         if self.debug:
             cmd += " --preview"
-        res = utils.execute_command(cmd)
+        if self.debug:
+            res = utils.execute_command(cmd, debug=True)
+        else:
+            res = utils.execute_command(cmd)
         return res
 
     def download_from_file(self): ...

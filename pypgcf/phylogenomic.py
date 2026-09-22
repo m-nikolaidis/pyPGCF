@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from pathlib import Path
 from tempfile import mkstemp
 from typing import Union
@@ -80,7 +81,7 @@ class Phylogenomic:
             genomes_to_keep.append(genome)
 
         if self.debug:
-            print(
+            logging.debug(
                 f"Num of genomes to keep: {len(genomes_to_keep)}. Num fasta files: {len(self.fasta_files)}"
             )
 
@@ -157,9 +158,10 @@ class Phylogenomic:
                     str(file),
                     "-out",
                     str(self.og_fasta_dir_aln / file.name),
-                    "-quiet",
                 ]
             )
+            if not self.debug:
+                cmd += " -quiet"
             commands.append(cmd)
         _ = multiprocess_dispatch(
             "system",
@@ -167,6 +169,7 @@ class Phylogenomic:
             self.cores,
             show_progress=True,
             description="Aligning OG fasta files",
+            debug=self.debug,
         )
         return None
 
@@ -249,7 +252,7 @@ class Phylogenomic:
             cmd += " -quiet"
         fout = self.out_dir / "superalignment_Fasttree.nwk"
         cmd += f" > {fout}"
-        _ = execute_command(cmd)
+        _ = execute_command(cmd, debug=self.debug)
 
     def compute_tree_iqtree(self):
         """
@@ -261,7 +264,7 @@ class Phylogenomic:
         )
         if not self.debug:
             cmd += " --quiet"
-        _ = execute_command(cmd)
+        _ = execute_command(cmd, debug=self.debug)
 
     def move_iqtree_files(self):
         files = list(self.out_dir.glob("superalignment.fa-gb.*"))
@@ -277,27 +280,30 @@ class Phylogenomic:
             recursive_unlink(directory)
 
     def run_phylogenomic(self) -> Union[None, int]:
-        print(
+        logging.debug(
             f"Loading orthology matrix: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
         self.load_orthology_matrix()
         self.setup_directories()
-        print(
+        logging.debug(
             f"Creating fasta files of each orthologous group: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
         self.create_og_fasta()
-        print(
+        logging.debug(
             f"Aligning fasta files of each orthologous group: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
         self.align_orthologous_groups_fasta()
-        print(
+        logging.debug(
             f"Creating super-alignment file: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
         self.create_superalignment_file()
-        print(
+        logging.debug(
             f"Filtering super-alignment file: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
         self.filter_superalignment()
+        logging.debug(
+            f"Computing phylogenomic tree: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
+        )
         print(
             f"Computing phylogenomic tree: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
@@ -308,7 +314,7 @@ class Phylogenomic:
         if self.tree_method == "IQTree":
             self.compute_tree_iqtree()
             self.move_iqtree_files()
-        print(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+        logging.debug(f"Done: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
         if self.no_keep_fasta:
             self.clean_fasta_files()
         if self.debug:

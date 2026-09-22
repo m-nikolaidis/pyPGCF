@@ -67,9 +67,6 @@ EGGNOG_HEADERS = [
     "PFAMs",
 ]
 
-logging.basicConfig(level=logging.DEBUG)
-
-
 class EggNOGRunner:
     def __init__(
         self,
@@ -143,6 +140,7 @@ class EggNOGRunner:
             num_procs=1,
             show_progress=True,
             description="Running eggNOG-mapper on representatives",
+            debug=self.debug,
         )
         self.clean_unessecary_output()
 

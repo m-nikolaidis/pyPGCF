@@ -3,11 +3,14 @@ Module that contains utlity functions used throughout the software
 """
 
 from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 from gzip import GzipFile
+import logging
 from math import floor
 from multiprocessing import get_context
 from os import system
 from pathlib import Path
+import re
 from tempfile import mkstemp
 from typing import Callable, List, Union
 from zipfile import ZipFile
@@ -98,6 +101,7 @@ def create_diamond_blastp_cmd(
     blast_evalue: float,
     blast_cores: int,
     outfmt: str,
+    debug: bool = False,
 ) -> str:
     # DIAMOND case first
     dmnd_sensitivity_values = [
@@ -109,7 +113,8 @@ def create_diamond_blastp_cmd(
     ]
     if dmnd_sensitivity not in dmnd_sensitivity_values:
         return ""
-    cmd = f"diamond blastp --query {fasta_file} --quiet --db {database_f} --outfmt {outfmt} --out {out_file} --evalue {blast_evalue} --threads {blast_cores} --{dmnd_sensitivity}"
+    quiet = "" if debug else " --quiet"
+    cmd = f"diamond blastp --query {fasta_file}{quiet} --db {database_f} --outfmt {outfmt} --out {out_file} --evalue {blast_evalue} --threads {blast_cores} --{dmnd_sensitivity}"
     return cmd
 
 
@@ -191,6 +196,7 @@ def multiprocess_dispatch(
     num_procs: int,
     show_progress: bool,
     description: str = "",
+    debug: bool = False,
 ) -> List:
     """
     Map a list of executable to a ProcessPoolExecutor
@@ -204,7 +210,7 @@ def multiprocess_dispatch(
         # mac needs spawn to have the __name__ == "__main__" guard
 
     if isinstance(f, str):  # If it is a string then just call the system
-        f = system
+        f = partial(execute_command, debug=debug)
     with ProcessPoolExecutor(num_procs, mp_context=mp_context) as executor:
         if show_progress:
             results = list(
@@ -221,7 +227,10 @@ def multiprocess_dispatch(
     return results
 
 
-def execute_command(cmd: str) -> int:
+def execute_command(cmd: str, debug: bool = False) -> int:
+    stdout_is_redirected = re.search(r"(?:^|\s)(?:>|1>|>>|1>>)\s*\S+", cmd)
+    if not debug and stdout_is_redirected is None:
+        cmd += " > /dev/null"
     ret = system(cmd)
     return ret
 
@@ -301,7 +310,7 @@ def download_file(url: str, filename: Union[Path, str], verify: bool = True) -> 
     try:
         response = requests.get(url, stream=True, verify=verify, headers=headers)
     except requests.exceptions.SSLError:
-        print(f"There is an SSL error in the connection of \n {url}")
+        logging.error(f"There is an SSL error in the connection of \n {url}")
         return 0
 
     chunk_size = 1024

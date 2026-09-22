@@ -72,6 +72,7 @@ class AMR_analyzer:
             self.concurrent_jobs,
             show_progress=True,
             description="Scanning for AMR genes",
+            debug=self.debug,
         )
         return None
 

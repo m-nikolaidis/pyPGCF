@@ -26,7 +26,7 @@ class CAZY_analyzer:
         cores: int,
         concurrent: bool,
         evalue: float,
-        verbose: bool,
+        debug: bool = False,
     ):
         self.cores = cores
         self.evalue = evalue
@@ -35,7 +35,7 @@ class CAZY_analyzer:
         self.out_dir = out_dir / "CAZY"
         self.search_res_dir = out_dir / "CAZY" / "CAZY_search"
         self.fasta_files = fasta_files_list
-        self.verbose = verbose
+        self.debug = debug
         if concurrent:
             self.concurrent_jobs = calc_avail_dispatchers(
                 available_cores, cores, avoid_throttle=True
@@ -91,6 +91,7 @@ class CAZY_analyzer:
             self.concurrent_jobs,
             show_progress=True,
             description="Scanning for CAZYmes",
+            debug=self.debug,
         )
         return None
 
@@ -130,7 +131,7 @@ class CAZY_analyzer:
                 next(rf)  # Advance headers to remove the need of the check
                 for line in rf:
                     line = line.rstrip()
-                    prot, ec, _, _, dmnd_r, num_tools = line.split("\t")
+                    _, _, _, _, dmnd_r, num_tools = line.split("\t")
                     if int(num_tools) < tool_cutoff:
                         continue
                     # hmmer_r = self._clean_hmm_output(hmmer_r)
