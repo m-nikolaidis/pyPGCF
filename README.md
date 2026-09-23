@@ -39,5 +39,15 @@ Notes:
 Details on how to run each module are available in video format in **[figshare](https://figshare.com/articles/media/pyPGCF_screencasts/22559992)**.
 The help page of the software and each module is available through the --help flag: `pyPGCF --help`
 
+### Phylogenomic CDS alignments
+
+With `phylogenomic --input_type cds`, pyPGCF translates each coding sequence
+with Biopython and aligns the translated proteins. Protein-alignment gaps are
+then projected back onto the original nucleotide sequences as codon gaps
+(`---`), and the resulting nucleotide alignment is written to
+`Phylogenomic_tree/OGs_fasta_aln`. Input CDS lengths must be divisible by
+three. The translated protein FASTA and protein alignment are temporary files
+and are removed after the corresponding nucleotide alignment is written.
+
 ## Citation
 Nikolaidis, M., Oliver, S.G., Amoutzias, G.D., 2024. pyPGCF: a python software for phylogenomic analysis, species demarcation, identification of core and fingerprint proteins of bacterial genomes that are important for plants. Methods in Molecular Biology.

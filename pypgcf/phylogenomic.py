@@ -1,7 +1,8 @@
 from datetime import datetime
 import logging
 from pathlib import Path
-from tempfile import mkstemp
+from shlex import quote
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Union
 
 from Bio import AlignIO, SeqIO
@@ -16,15 +17,126 @@ from pypgcf.utils import (
     execute_command,
     multiprocess_dispatch,
     recursive_unlink,
-    translate_fasta_records,
-    seqrecords_to_fasta,
-    create_temporary_file,
 )
 
 # from itaxotools.pygblocks import Options, compute_mask, trim_sequence
 # Revert this when the itaxotools recipe is created
 
-# TODO: If input type is CDS we need to translate before feeding to muscle and matching back
+def project_protein_alignment_to_codons(
+    aligned_proteins: list[SeqRecord],
+    nucleotide_records: dict[str, SeqRecord],
+) -> list[SeqRecord]:
+    """Project gaps in a protein alignment onto its original CDS records."""
+    aligned_ids = [record.id for record in aligned_proteins]
+    if len(aligned_ids) != len(set(aligned_ids)):
+        raise ValueError("Protein alignment contains duplicate record identifiers")
+    if set(aligned_ids) != set(nucleotide_records):
+        raise ValueError("Protein alignment identifiers do not match CDS identifiers")
+
+    projected_records = []
+    for protein in aligned_proteins:
+        nucleotide = nucleotide_records[protein.id]
+        if len(nucleotide.seq) % 3:
+            raise ValueError(
+                f"CDS {nucleotide.id} length is not divisible by three"
+            )
+
+        cursor = 0
+        aligned_codons = []
+        for residue in protein.seq:
+            if residue == "-":
+                aligned_codons.append("---")
+                continue
+            aligned_codons.append(str(nucleotide.seq[cursor : cursor + 3]))
+            cursor += 3
+
+        if cursor != len(nucleotide.seq):
+            raise ValueError(
+                f"Protein alignment does not consume CDS {nucleotide.id}"
+            )
+
+        projected_records.append(
+            SeqRecord(
+                Seq("".join(aligned_codons)),
+                id=nucleotide.id,
+                name=nucleotide.name,
+                description=nucleotide.description,
+            )
+        )
+    return projected_records
+
+
+def _align_cds_orthologous_group(
+    source: Path, destination: Path, debug: bool = False
+) -> int:
+    """Align one CDS orthologous group as proteins and write codon alignment."""
+    nucleotide_records = {}
+    with open(source) as source_handle:
+        for record in SeqIO.parse(source_handle, "fasta"):
+            if record.id in nucleotide_records:
+                raise ValueError(f"Duplicate CDS identifier {record.id} in {source}")
+            if len(record.seq) % 3:
+                raise ValueError(
+                    f"CDS {record.id} length is not divisible by three"
+                )
+            nucleotide_records[record.id] = record
+
+    translated_records = [
+        record.translate(
+            id=record.id,
+            name=record.name,
+            description=record.description,
+        )
+        for record in nucleotide_records.values()
+    ]
+    destination.parent.mkdir(exist_ok=True, parents=True)
+
+    with TemporaryDirectory(prefix="pypgcf-cds-alignment-") as tmp_dir:
+        temporary_dir = Path(tmp_dir)
+        protein_input = temporary_dir / "proteins.faa"
+        protein_alignment = temporary_dir / "proteins.aln.faa"
+        SeqIO.write(translated_records, protein_input, "fasta")
+
+        command = (
+            f"muscle -in {quote(str(protein_input))} "
+            f"-out {quote(str(protein_alignment))}"
+        )
+        if not debug:
+            command += " -quiet"
+        return_code = execute_command(command, debug=debug)
+        if return_code != 0:
+            raise RuntimeError(f"MUSCLE failed while aligning {source}")
+        if not protein_alignment.is_file():
+            raise RuntimeError(
+                f"MUSCLE did not create a protein alignment for {source}"
+            )
+
+        with open(protein_alignment) as alignment_handle:
+            aligned_proteins = list(SeqIO.parse(alignment_handle, "fasta"))
+        aligned_codons = project_protein_alignment_to_codons(
+            aligned_proteins, nucleotide_records
+        )
+
+        with NamedTemporaryFile(
+            mode="w",
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary_output:
+            temporary_destination = Path(temporary_output.name)
+        try:
+            SeqIO.write(aligned_codons, temporary_destination, "fasta")
+            temporary_destination.replace(destination)
+        finally:
+            temporary_destination.unlink(missing_ok=True)
+
+    return 0
+
+
+def _align_cds_orthologous_group_job(job: tuple[Path, Path, bool]) -> int:
+    """Unpack a CDS alignment job for process-pool dispatch."""
+    return _align_cds_orthologous_group(*job)
 
 
 class Phylogenomic:
@@ -148,7 +260,22 @@ class Phylogenomic:
         """
         Use muscle to align each file of orthologous group
         """
-        orthologous_groups_files = list(self.og_fasta_dir.glob("*"))
+        orthologous_groups_files = sorted(self.og_fasta_dir.glob("*"))
+        if self.input_type == "cds":
+            jobs = [
+                (file, self.og_fasta_dir_aln / file.name, self.debug)
+                for file in orthologous_groups_files
+            ]
+            multiprocess_dispatch(
+                _align_cds_orthologous_group_job,
+                jobs,
+                self.concurrent_jobs,
+                show_progress=True,
+                description="Aligning translated CDS orthologous groups",
+                debug=self.debug,
+            )
+            return None
+
         commands = []
         for file in orthologous_groups_files:
             cmd = " ".join(

@@ -1,6 +1,7 @@
-__pycache__/*
+__pycache__/
+pypgcf/__pycache__/
+pypgcf/_vendor/__pycache__/
 pypgcf/__pycache__/*
-pypgcf/__pycache__
 tests/__pycache__/
 tests/__pycache__/*
 example/*

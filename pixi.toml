@@ -8,7 +8,7 @@ preview = ["pixi-build"]
 
 [tasks]
 pyPGCF = "python ./pypgcf/cli.py"
-# test = "pytest tests/ -v"
+test = "pytest tests/ -v"
 
 [dependencies]
 python = "==3.11"
