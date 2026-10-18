@@ -239,10 +239,10 @@ class TestWorkflowRunner(unittest.TestCase):
         self.runner.create_core_ref_list()
 
         expected_core_ref_list = [
-            self.runner.out_dir / "Orthologues" / "Proteome1" / "OGMatrix.csv"
+            self.runner.out_dir / "Orthologues" / "Proteome1" / "OGmatrix.csv"
         ]
         expected_whole_set_ref_list = [
-            self.runner.out_dir / "Orthologues" / "Proteome1" / "OGMatrix.csv"
+            self.runner.out_dir / "Orthologues" / "Proteome1" / "OGmatrix.csv"
         ]
         self.assertEqual(self.runner.core_ref_list, expected_core_ref_list)
         self.assertEqual(
