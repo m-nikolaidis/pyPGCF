@@ -72,6 +72,21 @@ class TestOrthologuesIdentifier(unittest.TestCase):
             f"diamond makedb --in file1.fasta --quiet --db {dbfile} --threads 2"
         )
 
+    @patch("pypgcf.orthologues.execute_command")
+    def test_cds_input_builds_and_searches_with_blast(self, mock_execute_command):
+        self.ortho_id.input_type = "cds"
+        self.ortho_id._get_blast_binaries()
+        self.ortho_id.fasta_files = [Path("file1.fasta")]
+        self.ortho_id.create_blast_db()
+        db_cmd = mock_execute_command.call_args[0][0]
+        self.assertTrue(db_cmd.startswith("makeblastdb -in file1.fasta -dbtype nucl"))
+
+        search_cmd = self.ortho_id._create_blast_cmd(
+            Path("q.fasta"), Path("db"), Path("out.txt")
+        )
+        self.assertTrue(search_cmd.startswith("blastn -query q.fasta -db db"))
+        self.assertNotIn("blastp", search_cmd)
+
     @pytest.mark.skip(reason="Need to also add integration test for this function")
     @patch("pypgcf.orthologues.multiprocess_dispatch")
     def test_perform_reciprocal_blast(self, mock_multiprocess_dispatch):

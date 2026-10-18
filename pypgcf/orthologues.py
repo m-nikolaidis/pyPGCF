@@ -82,7 +82,7 @@ class Orthologues_identifier:
             database_f = self.blast_db_dir / fasta_file.stem
             quiet = "" if self.debug else " --quiet"
             cmd = f"{self.blast_bin} makedb --in {fasta_file}{quiet} --db {database_f} --threads {self.blast_cores}"  # DIAMOND
-            if self.input_type == "CDS":
+            if self.input_type == "cds":
                 cmd = f"{self.blast_db_bin} -in {fasta_file} -dbtype nucl -out {database_f}"
             if self.debug:
                 execute_command(cmd, debug=True)
@@ -106,7 +106,7 @@ class Orthologues_identifier:
         if not self.debug:
             cmd += "--quiet "
         cmd += added_sensitivity
-        if self.input_type == "nucl":
+        if self.input_type == "cds":
             cmd = f"{self.blast_bin} -query {fasta_file} -db {database_f} -outfmt 6 -out {out_file} -evalue {self.blast_evalue} -num_threads {self.blast_cores} "
         return cmd
 
