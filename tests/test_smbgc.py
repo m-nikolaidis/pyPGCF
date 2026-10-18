@@ -66,10 +66,10 @@ class TestsmBGCLocalRunner(unittest.TestCase):
             debug=True,
         )
         cmd = runner.create_antismash_cmd(Path("genome.fasta"), Path("/output/genome"))
-        expected_cmd = (
-            "antismash --output-dir /output/genome --cpu 4 --hmmdetection-strictness relaxed "
-            f"--genefinding-tool prodigal --cb-knownclusters {Path('genome.fasta').absolute()} -v -d"
-        )
+        expected_cmd = ["antismash", "--output-dir", "/output/genome", "--cpus", "4"]
+        expected_cmd += ["--hmmdetection-strictness", "relaxed"]
+        expected_cmd += ["--genefinding-tool", "prodigal", "--cb-knownclusters"]
+        expected_cmd += [str(Path("genome.fasta").absolute()), "-v", "-d"]
         self.assertEqual(cmd, expected_cmd)
 
     @patch("pathlib.Path.mkdir")

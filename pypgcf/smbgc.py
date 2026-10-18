@@ -44,23 +44,18 @@ class smBGCLocalRunner:
         if self.concurrent_jobs == 0:
             self.concurrent_jobs = 1
 
-    def create_antismash_cmd(self, genome_fasta_file: Path, genome_out_dir: Path):
-        cmd = " ".join(
-            [
-                "antismash",
-                f"--output-dir {genome_out_dir}",
-                f"--cpu {self.cores}",
-                f"--hmmdetection-strictness {self.strictness}",
-                f"--genefinding-tool {self.genefinding_tool}",
-                "--cb-knownclusters",
-                f"{genome_fasta_file.absolute()}",
-            ]
-        )
+    def create_antismash_cmd(
+        self, genome_fasta_file: Path, genome_out_dir: Path
+    ) -> list[str]:
+        cmd = ["antismash", "--output-dir", str(genome_out_dir)]
+        cmd += ["--cpus", str(self.cores)]
+        cmd += ["--hmmdetection-strictness", self.strictness]
+        cmd += ["--genefinding-tool", self.genefinding_tool]
+        cmd += ["--cb-knownclusters", str(genome_fasta_file.absolute())]
         if self.database_dir is not None:
-            cmd += f" --databases {self.database_dir}"
-
+            cmd += ["--databases", str(self.database_dir)]
         if self.debug:
-            cmd += " -v -d"
+            cmd += ["-v", "-d"]
         return cmd
 
     def analyze_genomes(self):
