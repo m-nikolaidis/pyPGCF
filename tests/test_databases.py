@@ -233,24 +233,25 @@ class TestAMRInstaller:
         assert installer.database_dir.exists()
     
     @patch('pypgcf.databases.execute_command')
-    def test_install_database_native_debug_mode(self, mock_execute, temp_db_dir):
+    def test_install_database_debug_mode(self, mock_execute, temp_db_dir):
         """Test AMR database installation in debug mode"""
         installer = AMR_installer(database_dir=temp_db_dir, debug=True)
         
-        installer.install_database_native()
+        installer.install_database()
         
         mock_execute.assert_called_once()
         cmd = mock_execute.call_args[0][0]
         assert "amrfinder_update" in cmd
         assert str(temp_db_dir / "AMR") in cmd
         assert "--quiet" not in cmd
+        assert "--threads" not in cmd  # amrfinder_update rejects it
     
     @patch('pypgcf.databases.execute_command')
-    def test_install_database_native_quiet_mode(self, mock_execute, temp_db_dir):
+    def test_install_database_quiet_mode(self, mock_execute, temp_db_dir):
         """Test AMR database installation in quiet mode"""
         installer = AMR_installer(database_dir=temp_db_dir, debug=False)
         
-        installer.install_database_native()
+        installer.install_database()
         
         mock_execute.assert_called_once()
         cmd = mock_execute.call_args[0][0]
