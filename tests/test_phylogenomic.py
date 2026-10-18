@@ -365,6 +365,28 @@ class TestModule(unittest.TestCase):
             fasta_file.unlink()  # For cleaning
         og_fasta_dir.rmdir()
 
+    def _iqtree_command(self, fast):
+        phylo = phylogenomic.Phylogenomic(
+            orthology_matrix_in=Path("matrix.csv"),
+            cores=2,
+            available_cores=2,
+            fasta_files_list=[],
+            out_dir=Path("out"),
+            no_keep_fasta=False,
+            tree_method="IQTree",
+            iqtree_model="TEST",
+            input_type="prot",
+            fast=fast,
+            debug=True,
+        )
+        with patch("pypgcf.phylogenomic.execute_command", return_value=0) as run:
+            phylo.compute_tree_iqtree()
+        return run.call_args[0][0]
+
+    def test_iqtree_command_uses_fast_only_when_requested(self):
+        self.assertNotIn("--fast", self._iqtree_command(fast=False))
+        self.assertIn("--fast", self._iqtree_command(fast=True))
+
     @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_create_og_fasta(self):
         fasta_dir = Path("../data/Protein_fasta_files")
