@@ -196,6 +196,24 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["method"], "Fasttree")
         self.assertEqual(args["no_keep_fasta"], False)
         self.assertEqual(args["tree_model"], "TEST")
+        self.assertFalse(args["fast"])
+
+    def test_phylogenomic_fast_flag(self):
+        args = vars(
+            self.parser.parse_args(
+                [
+                    "phylogenomic",
+                    "-in",
+                    "orthology_matrix",
+                    "-out",
+                    "output_dir",
+                    "-fasta_dir",
+                    "fasta_dir",
+                    "--fast",
+                ]
+            )
+        )
+        self.assertTrue(args["fast"])
 
     def test_add_eggnog_subparser(self):
         # Simulate CLI input for the phylogenomic module
