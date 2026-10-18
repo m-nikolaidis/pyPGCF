@@ -299,6 +299,22 @@ class TestRunFunctions(unittest.TestCase):
         mock_smBGCParser.assert_called_once_with(Path("output_directory"), 8)
         mock_instance_parser.gather_results.assert_called_once()
 
+    @patch("pypgcf.cli.AMR_analyzer.parse_results")
+    @patch("pypgcf.cli.AMR_analyzer.search_amr")
+    def test_run_amr_constructs_the_real_analyzer(self, mock_search, mock_parse):
+        args = {
+            "out": "output_directory",
+            "input_type": "prot",
+            "cores": 2,
+            "db": None,
+            "no_concurrent": True,
+            "debug": False,
+            "fasta_files": ["file1.fasta"],
+        }
+        cli.run_amr(args)
+        mock_search.assert_called_once()
+        mock_parse.assert_called_once()
+
     @patch("pypgcf.cli.VF_analyzer")
     def test_run_virulence(self, mock_VF_analyzer):
         args = {
@@ -384,7 +400,7 @@ class TestRunFunctions(unittest.TestCase):
             out_dir=Path("output_directory"),
             input_type="prot",
             available_cores=cli.software_defaults["system"]["usable_cores"],
-            cores=8,
+            blast_cores=8,
             concurrent=True,
             debug=True,
         )
