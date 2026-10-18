@@ -6,6 +6,14 @@ import pytest
 
 
 class TestRunFunctions(unittest.TestCase):
+    def test_workflow_defaults_include_every_phylogenomic_argument(self):
+        # The workflow builds phylogenomic arguments from software_defaults,
+        # so every key that run_phylogenomic reads must be present there.
+        defaults = cli.software_defaults["phylogenomic"]
+        for key in ["tree_model", "method", "no_keep_fasta", "input_type", "fast", "debug"]:
+            with self.subTest(key=key):
+                self.assertIn(key, defaults)
+
     @patch("pypgcf.cli.SpeciesDemarcator")
     @patch("pypgcf.cli.validate_directory", return_value=True)
     def test_run_species_demarcation(
