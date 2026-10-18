@@ -365,6 +365,7 @@ class TestModule(unittest.TestCase):
             fasta_file.unlink()  # For cleaning
         og_fasta_dir.rmdir()
 
+    @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_create_og_fasta(self):
         fasta_dir = Path("../data/Protein_fasta_files")
         orthology_matrix_f = Path("../data/OGmatrix.csv")
@@ -399,6 +400,7 @@ class TestModule(unittest.TestCase):
             self.assertEqual(num_records, 3)
         # self._cleanup_fasta()
 
+    @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_align_og_fasta(self):
         fasta_dir = Path("../data/Protein_fasta_files")
         orthology_matrix_f = Path("../data/OGmatrix.csv")
@@ -430,6 +432,7 @@ class TestModule(unittest.TestCase):
                 num_records += 1
             self.assertEqual(num_records, 3)
 
+    @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_create_supersequence_file(self):
         fasta_dir = Path("../data/Protein_fasta_files")
         orthology_matrix_f = Path("../data/OGmatrix.csv")
@@ -458,6 +461,7 @@ class TestModule(unittest.TestCase):
             self.assertGreater(len(record.seq), 0)
         self.assertEqual(num_records, 3)
 
+    @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_filter_supersequence_aln(self):
         fasta_dir = Path("../data/Protein_fasta_files")
         orthology_matrix_f = Path("../data/OGmatrix.csv")
@@ -491,6 +495,7 @@ class TestModule(unittest.TestCase):
         )
         self.assertEqual(htm_supersequence_file.exists(), False)
 
+    @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_compute_tree(self):
         fasta_dir = Path("../data/Protein_fasta_files")
         orthology_matrix_f = Path("../data/OGmatrix.csv")
@@ -518,6 +523,7 @@ class TestModule(unittest.TestCase):
         self.assertEqual(len(filenames), 7)
         self.assertIn("supersequence_IQTree2.nwk", filenames)
 
+    @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_run_phylogenomic(self):
         fasta_dir = Path("../data/Protein_fasta_files")
         orthology_matrix_f = Path("../data/OGmatrix.csv")
