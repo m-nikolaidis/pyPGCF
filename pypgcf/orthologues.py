@@ -99,12 +99,7 @@ class Orthologues_identifier:
             cmd += ["-evalue", str(self.blast_evalue)]
             cmd += ["-num_threads", str(self.blast_cores)]
             return cmd
-        sensitivity = {
-            "sensitive": "--sensitive",
-            "mid_sensitive": "--mid-sensitive",
-            "more_sensitive": "--more-sensitive",
-            "ultra_sensitive": "--ultra-sensitive",
-        }.get(self.dmnd_sensitivity, "--very-sensitive")
+        sensitivity = "--" + self.dmnd_sensitivity.replace("_", "-")
         cmd = [self.blast_bin, "blastp", "--query", str(fasta_file)]
         cmd += ["--db", str(database_f), "--outfmt", "6", "--out", str(out_file)]
         cmd += ["--evalue", str(self.blast_evalue), "--threads", str(self.blast_cores)]

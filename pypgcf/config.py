@@ -11,6 +11,14 @@ from typing import Optional, Union
 
 DB_BASE_DIR = Path(sysconfig.get_config_var("BINLIBDEST")) / "site-packages"
 DB_DIR_ENV = "PYPGCF_DB_DIR"
+# DIAMOND sensitivity modes, passed to DIAMOND as --<mode>
+DMND_SENSITIVITIES = [
+    "mid-sensitive",
+    "sensitive",
+    "more-sensitive",
+    "very-sensitive",
+    "ultra-sensitive",
+]
 DB_SUBDIRS = {
     "cazy": "CAZY",
     "virulence": "Virulence",

@@ -15,7 +15,7 @@ from tqdm import tqdm
 from pypgcf import utils
 from pypgcf.amr import AMR_analyzer
 from pypgcf.cazy import CAZY_analyzer
-from pypgcf.config import software_defaults, MODULE_TOOLS
+from pypgcf.config import software_defaults, DMND_SENSITIVITIES, MODULE_TOOLS
 from pypgcf.config import database_dir as resolve_database_dir
 from pypgcf.core import Core_identifier
 from pypgcf.databases import (
@@ -60,6 +60,11 @@ def validate_directory(path: Path) -> bool:
         logging.error(f"{path} is empty")
         return False
     return True
+
+
+def dmnd_sensitivity(value: str) -> str:
+    """Accept very_sensitive as well as DIAMOND's very-sensitive."""
+    return value.replace("_", "-")
 
 
 def setup_parser() -> argparse.ArgumentParser:
@@ -197,8 +202,10 @@ def add_orthologues_subparser(subparsers):
     )
     orthologues_blast.add_argument(
         "--dmnd_sensitivity",
-        help="Sensitivity settings for DIAMOND (i.e. very_sensitive). Not used when input type is CDS/nucl",
+        help="DIAMOND sensitivity mode. Not used when input type is cds",
         default=software_defaults["orthologues"]["dmnd_sensitivity"],
+        type=dmnd_sensitivity,
+        choices=DMND_SENSITIVITIES,
     )
     orthologues_blast.add_argument(
         "--no_concurrent",
@@ -494,8 +501,10 @@ def add_virulence_subparser(subparsers):
     )
     virulence.add_argument(
         "--dmnd_sensitivity",
-        help="Sensitivity settings for DIAMOND (i.e. very_sensitive)",  # TODO: Is this example good? Should it be _ or -?
+        help="DIAMOND sensitivity mode. Not used when input type is cds",
         default=software_defaults["virulence"]["dmnd_sensitivity"],
+        type=dmnd_sensitivity,
+        choices=DMND_SENSITIVITIES,
     )
     virulence.add_argument(
         "--no_concurrent",
