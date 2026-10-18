@@ -7,8 +7,8 @@ from context import cli
 
 
 class TestValidateDirectory(unittest.TestCase):
-    @patch("context.utils.check_if_dir_exists")
-    @patch("context.utils.check_if_dir_is_empty")
+    @patch("pypgcf.utils.check_if_dir_exists")
+    @patch("pypgcf.utils.check_if_dir_is_empty")
     def test_validate_directory_exists_and_non_empty(self, mock_is_empty, mock_exists):
         # Mock behavior for existing and non-empty directory
         mock_exists.return_value = True
@@ -22,8 +22,8 @@ class TestValidateDirectory(unittest.TestCase):
         mock_exists.assert_called_once_with(path)
         mock_is_empty.assert_called_once_with(path)
 
-    @patch("context.utils.check_if_dir_exists")
-    @patch("context.utils.check_if_dir_is_empty")
+    @patch("pypgcf.utils.check_if_dir_exists")
+    @patch("pypgcf.utils.check_if_dir_is_empty")
     def test_validate_directory_does_not_exist(self, mock_is_empty, mock_exists):
         # Mock behavior for non-existing directory
         mock_exists.return_value = False
@@ -37,8 +37,8 @@ class TestValidateDirectory(unittest.TestCase):
         mock_exists.assert_called_once_with(path)
         mock_is_empty.assert_not_called()
 
-    @patch("context.utils.check_if_dir_exists")
-    @patch("context.utils.check_if_dir_is_empty")
+    @patch("pypgcf.utils.check_if_dir_exists")
+    @patch("pypgcf.utils.check_if_dir_is_empty")
     def test_validate_directory_empty(self, mock_is_empty, mock_exists):
         # Mock behavior for existing but empty directory
         mock_exists.return_value = True
