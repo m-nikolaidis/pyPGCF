@@ -55,7 +55,7 @@ class TestWorkflowRunner(unittest.TestCase):
             "Calculate_orthologues": "Yes",
             "Calculate_cores": "Yes",
             "Calculate_fingerprints": "Yes",
-            "Calculate_entire_phylogenomic_tree": "Fasttree",
+            "Calculate_entire_phylogenomic_tree": "IQTree",
             "Calculate_group_representatives_phylogenomic_tree": "IQTree",
             "Calculate_EGGNOG_on_Group_representatives": "Yes",
             "Calculate_EGGNOG_on_core/fingerprints": "Yes",
@@ -97,7 +97,7 @@ class TestWorkflowRunner(unittest.TestCase):
             "Calculate_orthologues": "Yes",
             "Calculate_cores": "No",
             "Calculate_fingerprints": "Yes",
-            "Calculate_entire_phylogenomic_tree": "Fasttree",
+            "Calculate_entire_phylogenomic_tree": "IQTree",
         }
 
         self.runner.identify_tasks()

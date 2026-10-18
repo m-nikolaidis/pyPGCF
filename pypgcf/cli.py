@@ -265,7 +265,7 @@ def add_phylogenomic_subparser(subparsers):
     )
     phylogenomic.add_argument(
         "--method",
-        help="Tree method (IQTree, Fasttree, NJ)",
+        help="Tree method (IQTree, NJ)",
         default=software_defaults["phylogenomic"]["method"],
         choices=software_defaults["phylogenomic"]["valid_tree_methods"],
     )

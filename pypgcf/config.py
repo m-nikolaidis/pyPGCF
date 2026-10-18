@@ -47,7 +47,7 @@ software_defaults = {
     },
     "phylogenomic": {
         "cores": usable_cores,
-        "valid_tree_methods": ["NJ", "IQTree", "Fasttree"],
+        "valid_tree_methods": ["NJ", "IQTree"],
         "method": "IQTree",
         "tree_model": "TEST",
         "input_type": "prot",
