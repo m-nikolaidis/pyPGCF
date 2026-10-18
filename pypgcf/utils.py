@@ -132,22 +132,25 @@ def create_blastn_cmd(
     return cmd
 
 
-def create_blastdb_cmd(fin: Path, fout: Path, input_type: str, debug: bool) -> str:
+def create_blastdb_cmd(
+    fin: Path, fout: Path, input_type: str, debug: bool
+) -> List[str]:
     """
-    Create the command to index a database for blast
+    Create the command to index a database for blast.
+    Output is discarded by execute_command unless debug is set.
     """
     if input_type != "nucl" and input_type != "prot":
-        return ""
-    cmd = f"makeblastdb -dbtype {input_type} -in {fin} -out {fout}"
-    if not debug:
-        cmd += " > /dev/null"
-    return cmd
+        raise ValueError(f"Unknown BLAST database type: {input_type}")
+    return ["makeblastdb", "-dbtype", input_type, "-in", str(fin), "-out", str(fout)]
 
 
-def createdmnddb_cmd(fin: Path, fout: Path, debug: bool, threads: int = 4) -> str:
-    cmd = f"diamond makedb --db {fout} --in {fin} --threads {threads}"
+def createdmnddb_cmd(
+    fin: Path, fout: Path, debug: bool, threads: int = 4
+) -> List[str]:
+    cmd = ["diamond", "makedb", "--db", str(fout), "--in", str(fin)]
+    cmd += ["--threads", str(threads)]
     if not debug:
-        cmd += " --quiet"
+        cmd.append("--quiet")
     return cmd
 
 
