@@ -581,6 +581,18 @@ class TestRunFunctions(unittest.TestCase):
         )
         mock_VF_installer.return_value.install_database.assert_called_once()
 
+    def test_run_databases_installs_every_requested_database(self):
+        names = ["SMBGC", "EGGNOG", "CAZY", "AMR", "VF"]
+        installers = {n: patch(f"pypgcf.cli.{n}_installer") for n in names}
+        mocks = {n: p.start() for n, p in installers.items()}
+        for p in installers.values():
+            self.addCleanup(p.stop)
+        args = {"install": "all", "database_dir": None, "debug": False, "cores": 2}
+        cli.run_databases(args)
+        for name, mock in mocks.items():
+            with self.subTest(installer=name):
+                mock.return_value.install_database.assert_called_once()
+
     @patch("pypgcf.cli.WorkflowRunner")
     def test_run_workflow(self, mock_WorkflowRunner):
         args = {

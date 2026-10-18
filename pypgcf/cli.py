@@ -1019,7 +1019,7 @@ def run_databases(args):
         if database == "virulence":
             virulence = VF_installer(database_dir=database_dir, debug=debug)
             virulence.install_database()
-        return None
+    return None
 
 
 def run_workflow(args):
