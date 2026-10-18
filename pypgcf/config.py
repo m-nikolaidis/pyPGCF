@@ -110,3 +110,36 @@ software_defaults = {
         "assembly_level": "chromosome,complete",
     },
 }
+
+# Conda package (conda-forge or bioconda) that provides each external binary
+TOOL_PACKAGES = {
+    "fastANI": "fastani",
+    "mcxload": "mcl",
+    "mcl": "mcl",
+    "mcxdump": "mcl",
+    "diamond": "diamond",
+    "blastn": "blast",
+    "makeblastdb": "blast",
+    "muscle": "muscle",
+    "iqtree": "iqtree",
+    "emapper.py": "eggnog-mapper",
+    "antismash": "antismash",
+    "amrfinder": "ncbi-amrfinderplus",
+    "run_dbcan": "dbcan",
+    "datasets": "ncbi-datasets-cli",
+}
+
+# External binaries each module calls
+MODULE_TOOLS = {
+    "species_demarcation": ["fastANI", "mcxload", "mcl", "mcxdump"],
+    "orthologues": ["diamond"],
+    "orthologues_cds": ["blastn", "makeblastdb"],
+    "core": [],
+    "phylogenomic": ["muscle", "iqtree"],
+    "eggnog": ["emapper.py"],
+    "smbgc": ["antismash"],
+    "amr": ["amrfinder"],
+    "cazy": ["run_dbcan"],
+    "virulence": ["diamond"],
+    "download": ["datasets"],
+}
