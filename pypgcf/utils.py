@@ -103,12 +103,17 @@ def create_diamond_blastp_cmd(
     blast_cores: int,
     outfmt: str,
     debug: bool = False,
-) -> str:
+) -> List[str]:
     dmnd_sensitivity = dmnd_sensitivity.replace("_", "-")
     if dmnd_sensitivity not in config.DMND_SENSITIVITIES:
         raise ValueError(f"Unknown DIAMOND sensitivity: {dmnd_sensitivity}")
-    quiet = "" if debug else " --quiet"
-    cmd = f"diamond blastp --query {fasta_file}{quiet} --db {database_f} --outfmt {outfmt} --out {out_file} --evalue {blast_evalue} --threads {blast_cores} --{dmnd_sensitivity}"
+    cmd = ["diamond", "blastp", "--query", str(fasta_file)]
+    if not debug:
+        cmd.append("--quiet")
+    # DIAMOND takes the output format fields as separate arguments
+    cmd += ["--db", str(database_f), "--outfmt", *outfmt.split()]
+    cmd += ["--out", str(out_file), "--evalue", str(blast_evalue)]
+    cmd += ["--threads", str(blast_cores), f"--{dmnd_sensitivity}"]
     return cmd
 
 
@@ -119,8 +124,11 @@ def create_blastn_cmd(
     blast_evalue: float,
     blast_cores: int,
     outfmt: str,
-) -> str:
-    cmd = f"blastn -query {fasta_file} -db {database_f} -outfmt {outfmt} -out {out_file} -evalue {blast_evalue} -num_threads {blast_cores}"
+) -> List[str]:
+    # BLAST+ takes the whole output format as one argument
+    cmd = ["blastn", "-query", str(fasta_file), "-db", str(database_f)]
+    cmd += ["-outfmt", outfmt, "-out", str(out_file)]
+    cmd += ["-evalue", str(blast_evalue), "-num_threads", str(blast_cores)]
     return cmd
 
 

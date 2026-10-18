@@ -195,11 +195,11 @@ class TestUtilityModule(unittest.TestCase):
             4,
             "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore",
         )
-        expected_cmd = (
-            "diamond blastp --query query.fasta --quiet --db db.dmnd --outfmt "
-            "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore "
-            "--out out.txt --evalue 0.001 --threads 4 --sensitive"
-        )
+        fields = "qseqid sseqid pident length mismatch gapopen qstart qend sstart"
+        expected_cmd = ["diamond", "blastp", "--query", "query.fasta", "--quiet"]
+        expected_cmd += ["--db", "db.dmnd", "--outfmt", "6", *fields.split()]
+        expected_cmd += ["send", "evalue", "bitscore", "--out", "out.txt"]
+        expected_cmd += ["--evalue", "0.001", "--threads", "4", "--sensitive"]
         self.assertEqual(cmd, expected_cmd)
 
     def test_create_blastn_cmd(self):
@@ -211,7 +211,9 @@ class TestUtilityModule(unittest.TestCase):
             blast_cores=4,
             outfmt="6 qseqid sseqid pident evalue bitscore",
         )
-        expected_cmd = "blastn -query query.fasta -db db -outfmt 6 qseqid sseqid pident evalue bitscore -out out.txt -evalue 0.001 -num_threads 4"
+        expected_cmd = ["blastn", "-query", "query.fasta", "-db", "db"]
+        expected_cmd += ["-outfmt", "6 qseqid sseqid pident evalue bitscore"]
+        expected_cmd += ["-out", "out.txt", "-evalue", "0.001", "-num_threads", "4"]
         self.assertEqual(cmd, expected_cmd)
 
     def test_create_blastdb_cmd(self):
