@@ -62,8 +62,11 @@ class TestAMRAnalyzer(unittest.TestCase):
 
         mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
         expected_cmds = [
-            "amrfinder --plus -i -1 -o /test/out/AMR/amrfinder/fasta1.txt --threads 2 -d /test/database/AMR -p /test/fasta1 --quiet",
-            "amrfinder --plus -i -1 -o /test/out/AMR/amrfinder/fasta2.txt --threads 2 -d /test/database/AMR -p /test/fasta2 --quiet",
+            ["amrfinder", "--plus", "-i", "-1"]
+            + ["-o", f"/test/out/AMR/amrfinder/{name}.txt", "--threads", "2"]
+            + ["-d", "/test/database/AMR", "-p", f"/test/{name}"]
+            + ["--quiet"]
+            for name in ["fasta1", "fasta2"]
         ]
         mock_multiprocess_dispatch.assert_called_once_with(
             "system",
