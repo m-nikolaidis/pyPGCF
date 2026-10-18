@@ -384,3 +384,16 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["module"], "amr")
         self.assertEqual(args["out"], "output_dir")
         self.assertEqual(args["fasta_dir"], "fasta_dir")
+
+
+class TestModuleEntryPoint(unittest.TestCase):
+    def test_python_m_pypgcf_runs_the_cli(self):
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "-m", "pypgcf", "-h"], capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("usage: pyPGCF", result.stdout)
+
