@@ -5,6 +5,30 @@ from context import cli
 import pytest
 
 
+class TestToolPreflight(unittest.TestCase):
+    def test_required_tools_depend_on_arguments(self):
+        self.assertEqual(
+            cli.required_tools("orthologues", {"input_type": "prot"}), ["diamond"]
+        )
+        self.assertEqual(
+            cli.required_tools("orthologues", {"input_type": "cds"}),
+            ["blastn", "makeblastdb"],
+        )
+        self.assertIn(
+            "fastANI", cli.required_tools("download", {"perform_fastani": True})
+        )
+        self.assertEqual(cli.required_tools("core", {}), [])
+
+    @patch("pypgcf.utils.shutil.which", return_value=None)
+    def test_main_exits_before_running_when_tools_are_missing(self, mock_which):
+        argv = ["pyPGCF", "phylogenomic", "-in", "m", "-out", "o", "-fasta_dir", "f"]
+        with patch("sys.argv", argv), patch("pypgcf.cli.run_phylogenomic") as run:
+            with self.assertRaises(SystemExit) as ctx:
+                cli.main()
+        self.assertIn("muscle, iqtree", str(ctx.exception.code))
+        run.assert_not_called()
+
+
 class TestRunFunctions(unittest.TestCase):
     def test_workflow_defaults_include_every_phylogenomic_argument(self):
         # The workflow builds phylogenomic arguments from software_defaults,
