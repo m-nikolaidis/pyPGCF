@@ -364,6 +364,8 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["out"], "output_dir")
         self.assertEqual(args["fasta_dir"], "fasta_dir")
         self.assertEqual(args["db"], None)
+        # run_cazy reads this key, so the parser must always set it
+        self.assertFalse(args["no_concurrent"])
 
     def test_add_amr_subparser(self):
         # Simulate CLI input for the amr module

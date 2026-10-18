@@ -534,7 +534,11 @@ def add_cazy_subparser(subparsers):
         help="E-value cut-off",
         default=software_defaults["cazy"]["evalue"],
     )
-
+    cazy.add_argument(
+        "--no_concurrent",
+        help="Do not run parallel search jobs",
+        action="store_true",
+    )
     cazy.add_argument("--debug", help="Print debug information", action="store_true")
 
 
