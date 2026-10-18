@@ -373,12 +373,15 @@ class TestModule(unittest.TestCase):
         no_keep_fasta = False
         tree_model = None
         phylo = phylogenomic.Phylogenomic(
-            orthology_matrix_f,
-            cores,
-            fasta_dir,
-            out_dir,
-            no_keep_fasta,
-            tree_model,
+            orthology_matrix_in=orthology_matrix_f,
+            cores=cores,
+            available_cores=cores,
+            fasta_files_list=list(fasta_dir.glob("*")),
+            out_dir=out_dir,
+            no_keep_fasta=no_keep_fasta,
+            tree_method="iqtree",
+            iqtree_model=tree_model,
+            input_type="prot",
             debug=True,
         )
 
@@ -404,12 +407,15 @@ class TestModule(unittest.TestCase):
         no_keep_fasta = False
         tree_model = None
         phylo = phylogenomic.Phylogenomic(
-            orthology_matrix_f,
-            cores,
-            fasta_dir,
-            out_dir,
-            no_keep_fasta,
-            tree_model,
+            orthology_matrix_in=orthology_matrix_f,
+            cores=cores,
+            available_cores=cores,
+            fasta_files_list=list(fasta_dir.glob("*")),
+            out_dir=out_dir,
+            no_keep_fasta=no_keep_fasta,
+            tree_method="iqtree",
+            iqtree_model=tree_model,
+            input_type="prot",
             debug=True,
         )
         phylo.align_og_fasta()
@@ -432,12 +438,15 @@ class TestModule(unittest.TestCase):
         no_keep_fasta = False
         tree_model = None
         phylo = phylogenomic.Phylogenomic(
-            orthology_matrix_f,
-            cores,
-            fasta_dir,
-            out_dir,
-            no_keep_fasta,
-            tree_model,
+            orthology_matrix_in=orthology_matrix_f,
+            cores=cores,
+            available_cores=cores,
+            fasta_files_list=list(fasta_dir.glob("*")),
+            out_dir=out_dir,
+            no_keep_fasta=no_keep_fasta,
+            tree_method="iqtree",
+            iqtree_model=tree_model,
+            input_type="prot",
             debug=True,
         )
         phylo.create_supersequence_file()
@@ -457,12 +466,15 @@ class TestModule(unittest.TestCase):
         no_keep_fasta = False
         tree_model = None
         phylo = phylogenomic.Phylogenomic(
-            orthology_matrix_f,
-            cores,
-            fasta_dir,
-            out_dir,
-            no_keep_fasta,
-            tree_model,
+            orthology_matrix_in=orthology_matrix_f,
+            cores=cores,
+            available_cores=cores,
+            fasta_files_list=list(fasta_dir.glob("*")),
+            out_dir=out_dir,
+            no_keep_fasta=no_keep_fasta,
+            tree_method="iqtree",
+            iqtree_model=tree_model,
+            input_type="prot",
             debug=True,
         )
         phylo.filter_supersequence_aln()
@@ -487,12 +499,15 @@ class TestModule(unittest.TestCase):
         no_keep_fasta = False
         tree_model = None
         phylo = phylogenomic.Phylogenomic(
-            orthology_matrix_f,
-            cores,
-            fasta_dir,
-            out_dir,
-            no_keep_fasta,
-            tree_model,
+            orthology_matrix_in=orthology_matrix_f,
+            cores=cores,
+            available_cores=cores,
+            fasta_files_list=list(fasta_dir.glob("*")),
+            out_dir=out_dir,
+            no_keep_fasta=no_keep_fasta,
+            tree_method="iqtree",
+            iqtree_model=tree_model,
+            input_type="prot",
             debug=True,
         )
         phylo.compute_tree()
@@ -511,12 +526,15 @@ class TestModule(unittest.TestCase):
         no_keep_fasta = False
         tree_model = None
         phylo = phylogenomic.Phylogenomic(
-            orthology_matrix_f,
-            cores,
-            fasta_dir,
-            out_dir,
-            no_keep_fasta,
-            tree_model,
+            orthology_matrix_in=orthology_matrix_f,
+            cores=cores,
+            available_cores=cores,
+            fasta_files_list=list(fasta_dir.glob("*")),
+            out_dir=out_dir,
+            no_keep_fasta=no_keep_fasta,
+            tree_method="iqtree",
+            iqtree_model=tree_model,
+            input_type="prot",
             debug=True,
         )
         return_code = phylo.run_phylogenomic()
