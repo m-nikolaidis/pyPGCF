@@ -69,7 +69,11 @@ class TestOrthologuesIdentifier(unittest.TestCase):
         self.assertEqual(mock_execute_command.call_count, 1)
         dbfile = self.ortho_id.blast_db_dir / "file1"
         mock_execute_command.assert_called_once_with(
-            f"diamond makedb --in file1.fasta --quiet --db {dbfile} --threads 2"
+            [
+                "diamond", "makedb", "--in", "file1.fasta",
+                "--db", str(dbfile), "--threads", "2", "--quiet",
+            ],
+            debug=False,
         )
 
     @patch("pypgcf.orthologues.execute_command")
@@ -79,13 +83,21 @@ class TestOrthologuesIdentifier(unittest.TestCase):
         self.ortho_id.fasta_files = [Path("file1.fasta")]
         self.ortho_id.create_blast_db()
         db_cmd = mock_execute_command.call_args[0][0]
-        self.assertTrue(db_cmd.startswith("makeblastdb -in file1.fasta -dbtype nucl"))
+        self.assertEqual(
+            db_cmd[:5], ["makeblastdb", "-in", "file1.fasta", "-dbtype", "nucl"]
+        )
 
         search_cmd = self.ortho_id._create_blast_cmd(
             Path("q.fasta"), Path("db"), Path("out.txt")
         )
-        self.assertTrue(search_cmd.startswith("blastn -query q.fasta -db db"))
+        self.assertEqual(search_cmd[:5], ["blastn", "-query", "q.fasta", "-db", "db"])
         self.assertNotIn("blastp", search_cmd)
+
+    def test_diamond_search_uses_sensitivity_and_quiet(self):
+        self.ortho_id._get_blast_binaries()
+        cmd = self.ortho_id._create_blast_cmd(Path("q.fa"), Path("db"), Path("o.txt"))
+        self.assertEqual(cmd[:4], ["diamond", "blastp", "--query", "q.fa"])
+        self.assertEqual(cmd[-2:], ["--quiet", "--sensitive"])
 
     @pytest.mark.skip(reason="Need to also add integration test for this function")
     @patch("pypgcf.orthologues.multiprocess_dispatch")

@@ -80,34 +80,37 @@ class Orthologues_identifier:
             self.fasta_files, desc="Preparing DIAMOND/BLAST database", ascii=True
         ):
             database_f = self.blast_db_dir / fasta_file.stem
-            quiet = "" if self.debug else " --quiet"
-            cmd = f"{self.blast_bin} makedb --in {fasta_file}{quiet} --db {database_f} --threads {self.blast_cores}"  # DIAMOND
             if self.input_type == "cds":
-                cmd = f"{self.blast_db_bin} -in {fasta_file} -dbtype nucl -out {database_f}"
-            if self.debug:
-                execute_command(cmd, debug=True)
-            else:
-                execute_command(cmd)
+                cmd = [self.blast_db_bin, "-in", str(fasta_file), "-dbtype", "nucl"]
+                cmd += ["-out", str(database_f)]
+            else:  # DIAMOND
+                cmd = [self.blast_bin, "makedb", "--in", str(fasta_file)]
+                cmd += ["--db", str(database_f), "--threads", str(self.blast_cores)]
+                if not self.debug:
+                    cmd.append("--quiet")
+            execute_command(cmd, debug=self.debug)
 
     def _create_blast_cmd(
         self, fasta_file: Path, database_f: Path, out_file: Path
-    ) -> str:
-        # DIAMOND case first
-        added_sensitivity = " --very-sensitive"
-        if self.dmnd_sensitivity == "sensitive":
-            added_sensitivity = " --sensitive"
-        if self.dmnd_sensitivity == "mid_sensitive":
-            added_sensitivity = " --mid-sensitive"
-        if self.dmnd_sensitivity == "more_sensitive":
-            added_sensitivity = " --more-sensitive"
-        if self.dmnd_sensitivity == "ultra_sensitive":
-            added_sensitivity = " --ultra-sensitive"
-        cmd = f"{self.blast_bin} blastp --query {fasta_file} --db {database_f} --outfmt 6 --out {out_file} --evalue {self.blast_evalue} --threads {self.blast_cores} "
-        if not self.debug:
-            cmd += "--quiet "
-        cmd += added_sensitivity
+    ) -> list[str]:
         if self.input_type == "cds":
-            cmd = f"{self.blast_bin} -query {fasta_file} -db {database_f} -outfmt 6 -out {out_file} -evalue {self.blast_evalue} -num_threads {self.blast_cores} "
+            cmd = [self.blast_bin, "-query", str(fasta_file), "-db", str(database_f)]
+            cmd += ["-outfmt", "6", "-out", str(out_file)]
+            cmd += ["-evalue", str(self.blast_evalue)]
+            cmd += ["-num_threads", str(self.blast_cores)]
+            return cmd
+        sensitivity = {
+            "sensitive": "--sensitive",
+            "mid_sensitive": "--mid-sensitive",
+            "more_sensitive": "--more-sensitive",
+            "ultra_sensitive": "--ultra-sensitive",
+        }.get(self.dmnd_sensitivity, "--very-sensitive")
+        cmd = [self.blast_bin, "blastp", "--query", str(fasta_file)]
+        cmd += ["--db", str(database_f), "--outfmt", "6", "--out", str(out_file)]
+        cmd += ["--evalue", str(self.blast_evalue), "--threads", str(self.blast_cores)]
+        if not self.debug:
+            cmd.append("--quiet")
+        cmd.append(sensitivity)
         return cmd
 
     def setup(self) -> None:
