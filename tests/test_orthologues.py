@@ -45,14 +45,14 @@ class TestOrthologuesIdentifier(unittest.TestCase):
         self.ortho_id._get_blast_binaries()
         self.assertEqual(self.ortho_id.blast_bin, "diamond")
 
-        self.ortho_id.input_type = "CDS"
+        self.ortho_id.input_type = "cds"
         self.ortho_id._get_blast_binaries()
         self.assertEqual(self.ortho_id.blast_bin, "blastn")
         self.assertEqual(self.ortho_id.blast_db_bin, "makeblastdb")
 
     @patch("builtins.open", new_callable=mock_open, read_data="ref1\nref2\n")
-    @patch("context.orthologues.Orthologues_identifier._create_directories")
-    @patch("context.orthologues.Orthologues_identifier._get_blast_binaries")
+    @patch("pypgcf.orthologues.Orthologues_identifier._create_directories")
+    @patch("pypgcf.orthologues.Orthologues_identifier._get_blast_binaries")
     def test_setup(self, mock_get_blast_binaries, mock_create_directories, mock_open):
         self.ortho_id.ref_list = "dummy_ref_list.txt"
         self.ortho_id.setup()
@@ -60,7 +60,7 @@ class TestOrthologuesIdentifier(unittest.TestCase):
         mock_get_blast_binaries.assert_called()
         self.assertEqual(mock_create_directories.call_count, 3)
 
-    @patch("context.orthologues.execute_command")
+    @patch("pypgcf.orthologues.execute_command")
     @patch("tqdm.tqdm", lambda x, **kwargs: x)  # To bypass the progress bar
     def test_create_blast_db(self, mock_execute_command):
         self.ortho_id.fasta_files = [Path("file1.fasta")]
@@ -73,7 +73,7 @@ class TestOrthologuesIdentifier(unittest.TestCase):
         )
 
     @pytest.mark.skip(reason="Need to also add integration test for this function")
-    @patch("context.orthologues.multiprocess_dispatch")
+    @patch("pypgcf.orthologues.multiprocess_dispatch")
     def test_perform_reciprocal_blast(self, mock_multiprocess_dispatch):
         self.ortho_id.blast_db_dir.mkdir(parents=True, exist_ok=True)
         self.ortho_id.ref = "file1"
@@ -83,7 +83,7 @@ class TestOrthologuesIdentifier(unittest.TestCase):
         self.assertIn("file1", ref_fasta.name)
         self.assertEqual(mock_multiprocess_dispatch.call_count, 1)
 
-    @patch("context.orthologues.multiprocess_dispatch")
+    @patch("pypgcf.orthologues.multiprocess_dispatch")
     def test_perform_reciprocal_blast_wrong_ref(self, mock_multiprocess_dispatch):
         self.ortho_id.blast_db_dir.mkdir(parents=True, exist_ok=True)
         self.ortho_id.ref = "FAKE"
@@ -204,12 +204,12 @@ class TestOrthologuesIdentifier(unittest.TestCase):
         self.assertEqual(mock_from_dict.call_count, 1)
         self.assertEqual(mock_to_csv.call_count, 1)
 
-    @patch("context.orthologues.recursive_unlink")
-    @patch("context.orthologues.Orthologues_identifier.create_orthology_matrix")
-    @patch("context.orthologues.Orthologues_identifier.parse_blast_results")
-    @patch("context.orthologues.Orthologues_identifier.perform_reciprocal_blast")
-    @patch("context.orthologues.Orthologues_identifier.create_blast_db")
-    @patch("context.orthologues.Orthologues_identifier.setup")
+    @patch("pypgcf.orthologues.recursive_unlink")
+    @patch("pypgcf.orthologues.Orthologues_identifier.create_orthology_matrix")
+    @patch("pypgcf.orthologues.Orthologues_identifier.parse_blast_results")
+    @patch("pypgcf.orthologues.Orthologues_identifier.perform_reciprocal_blast")
+    @patch("pypgcf.orthologues.Orthologues_identifier.create_blast_db")
+    @patch("pypgcf.orthologues.Orthologues_identifier.setup")
     def test_calculate_orthologues(
         self,
         mock_setup,
