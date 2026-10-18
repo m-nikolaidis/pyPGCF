@@ -16,7 +16,7 @@ class TestWorkflowRunner(unittest.TestCase):
             out_dir=self.out_dir, param_file=self.param_file, debug=True
         )
 
-    @patch("context.workflow.read_excel")
+    @patch("pypgcf.workflow.read_excel")
     def test_read_param_file(self, mock_read_excel):
         # Mock the DataFrame returned by read_excel
         data = {
@@ -33,7 +33,7 @@ class TestWorkflowRunner(unittest.TestCase):
             {"CDS_or_proteins": "CDS", "input_genomes_path": "/path/to/genomes"},
         )
 
-    @patch("context.workflow.Path")
+    @patch("pypgcf.workflow.Path")
     def test_validate_parameters(self, mock_path):
         self.runner.params = {
             "CDS_or_proteins": "CDS",
@@ -70,7 +70,7 @@ class TestWorkflowRunner(unittest.TestCase):
         }
         self.runner.validate_parameters()
 
-    @patch("context.workflow.read_csv")
+    @patch("pypgcf.workflow.read_csv")
     def test_load_input_genomes_or_proteomes_list(self, mock_read_csv):
         mock_df = DataFrame.from_dict(
             {
@@ -244,7 +244,7 @@ class TestWorkflowRunner(unittest.TestCase):
             self.runner.core_whole_set_ref_list, expected_whole_set_ref_list
         )
 
-    @patch("context.workflow.create_temporary_file")
+    @patch("pypgcf.workflow.create_temporary_file")
     @patch("pathlib.Path.write_text")
     def test_write_species_file_for_core(self, mock_write_text, mock_create_temp_file):
         mock_create_temp_file.return_value = Path("/mock/temp/file")
@@ -279,7 +279,7 @@ class TestWorkflowRunner(unittest.TestCase):
             Path("/mock/out/dir/Orthologues/mock_ref/OGmatrix.csv"),
         )
 
-    @patch("context.workflow.Path.exists")
+    @patch("pypgcf.workflow.Path.exists")
     def test_create_eggnog_core_protein_files_list(self, mock_path_exist):
         mock_path_exist.return_value = True
         self.runner.orthologues_ref_list = ["mock_ref1", "mock_ref2"]
