@@ -19,20 +19,41 @@ The tool consists of 6 modules with each one devoted to one specific analysis as
 
 ![](./resources/pyPGCF.png)
 
-## Installation 
-Currently installation is only available through the conda or mamba environment managers.  
-If you don't have mamba installed just replace the word 'mamba' with 'conda'.  
+## Installation
+pyPGCF supports Python 3.11 and 3.12. Installation is through conda, mamba or pixi.
+If you don't have mamba installed just replace the word 'mamba' with 'conda'.
 
-Using global pixi:
-pixi global install --path pypgcf-2.0.0-h60d57d3_0.conda --channel conda-forge --channel bioconda --environment pypgcf
+### Recommended: conda or mamba
 
-First create a virtual environment with python 3.9:  
-`mamba create -n pyPGCF python=3.9`  
+Create an environment with pyPGCF and the external tools it calls:
 
-Then install the software with the following command:  
-`mamba install -c mnikolaidis -c conda-forge -c bioconda pypgcf`
+`mamba create -n pyPGCF -c mnikolaidis -c conda-forge -c bioconda pypgcf iqtree muscle fastani mcl diamond blast fasttree`
 
-Notes: 
+The Python packages (pandas, scipy, biopython, openpyxl, tqdm, requests) are installed automatically.
+
+### Using pixi
+
+`pixi global install --path pypgcf-<version>-<build>.conda --channel conda-forge --channel bioconda --environment pypgcf`
+
+### From source with pip
+
+`pip install .` installs the Python dependencies only. The external tools must already be on your PATH.
+
+### External tools
+
+| Module | Tools |
+| --- | --- |
+| Species demarcation | fastANI, MCL |
+| Orthologues | BLAST+ (`blastp`, `makeblastdb`), DIAMOND |
+| Phylogenomic | MUSCLE, IQ-TREE, FastTree |
+| eggNOG annotation | eggNOG-mapper |
+| smBGC | antiSMASH |
+| AMR | AMRFinderPlus |
+| CAZy | dbCAN |
+
+The conda package lists all of them as dependencies. With pip, install only the tools for the modules you use.
+
+Notes:
 1) The software should move to the bioconda channel in the near future
 
 ## Running
