@@ -1,3 +1,4 @@
+import shutil
 import os
 import unittest
 import zipfile
@@ -51,6 +52,8 @@ class TestModule(unittest.TestCase):
                 os.rmdir(os.path.join(root, name))
         os.rmdir(self.temp_dir)
 
+    @pytest.mark.external
+    @pytest.mark.skipif(shutil.which("datasets") is None, reason="NCBI datasets CLI not installed")
     def test_download_hydrated(self):
         res = self.gd.download_hydrated()
         self.assertIs(res, 0)
@@ -65,7 +68,7 @@ class TestModule(unittest.TestCase):
         utils.recursive_unlink(expected_directory)
         utils.recursive_unlink(readme_file)
 
-    @patch("context.utils.check_if_file_exists")
+    @patch("pypgcf.utils.check_if_file_exists")
     @patch("zipfile.ZipFile.extractall")
     def test_extract_dataset_zip_mock(self, mock_extractall, mock_check_file_exists):
         with zipfile.ZipFile(self.gd.out_dir / "dataset.zip", "w") as _:
@@ -74,7 +77,7 @@ class TestModule(unittest.TestCase):
         mock_extractall.assert_called_once_with(self.gd.out_dir)
         mock_check_file_exists.assert_called_once()
 
-    @patch("context.utils.check_if_file_exists")
+    @patch("pypgcf.utils.check_if_file_exists")
     def test_extract_dataset_zip_nonexistent(self, mock_check_file_exists):
         with self.assertRaises(FileNotFoundError):
             self.gd.extract_dataset_zip()
@@ -390,7 +393,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(mock_write.called)
         self.assertTrue(self.gd.out_dir / "16S_sequences.fna")
 
-    @patch("context.utils.recursive_unlink")
+    @patch("pypgcf.utils.recursive_unlink")
     def test_remove_dataset_archive(self, mock_recursive_unlink):
         self.gd.remove_dataset_archive()
         mock_recursive_unlink.assert_called()
@@ -452,7 +455,7 @@ class TestModule(unittest.TestCase):
 #     self.assertTrue(mock_write.called)
 
 # No longer needed
-# @patch("context.utils.is_valid_assembly_source")
+# @patch("pypgcf.utils.is_valid_assembly_source")
 # def test_init_invalid_source(self, mock_is_valid_assembly_source):
 #     mock_is_valid_assembly_source.return_value = False
 #     with self.assertRaises(ValueError):
