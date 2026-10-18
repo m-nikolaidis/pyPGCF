@@ -242,7 +242,7 @@ class TestRunFunctions(unittest.TestCase):
         mock_runner_instance.execute_eggnog_mapper.assert_called_once()
         mock_EggNOGParser.assert_called_once_with(
             fasta_files_list=["file1.fasta", "file2.fasta"],
-            core_proteins_table_f=None,
+            core_protein_table_file_list=None,
             out_dir=Path("output_directory"),
             debug=True,
         )
@@ -259,7 +259,7 @@ class TestRunFunctions(unittest.TestCase):
 
         mock_EggNOGParser.assert_called_with(
             fasta_files_list=["file1.fasta", "file2.fasta"],
-            core_proteins_table_f=[Path("core_proteins_file.xlsx")],
+            core_protein_table_file_list=[Path("core_proteins_file.xlsx")],
             out_dir=Path("output_directory"),
             debug=True,
         )
