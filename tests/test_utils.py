@@ -120,11 +120,22 @@ class TestUtilityModule(unittest.TestCase):
         self.assertEqual(ret_pass, 0)
         self.assertNotEqual(ret_fail, 0)
 
-    @patch("os.system")
-    def test_execute_command_mock(self, mock_system):
-        mock_system.return_value = 0  # Mock return for system command
+    @patch("pypgcf.utils.subprocess.run")
+    def test_execute_command_string_uses_shell(self, mock_run):
+        mock_run.return_value.returncode = 0
         ret = utils.execute_command('echo "Hello World"')
         self.assertEqual(ret, 0)
+        mock_run.assert_called_once_with('echo "Hello World" > /dev/null', shell=True)
+
+    def test_execute_command_list_runs_without_shell(self):
+        self.assertEqual(utils.execute_command(["true"]), 0)
+        self.assertNotEqual(utils.execute_command(["false"]), 0)
+        # Shell syntax is passed through literally, not interpreted
+        self.assertEqual(utils.execute_command(["echo", "a > b"]), 0)
+        self.assertFalse(Path("b").exists())
+
+    def test_execute_command_list_missing_binary_returns_127(self):
+        self.assertEqual(utils.execute_command(["pypgcf-no-such-tool"]), 127)
 
     def test_multiprocess_dispatch_callable_with_progress(self):
         inputs = list(range(5000))

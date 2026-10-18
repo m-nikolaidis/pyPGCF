@@ -8,9 +8,9 @@ from gzip import GzipFile
 import logging
 from math import floor
 from multiprocessing import get_context
-from os import system
 from pathlib import Path
 import re
+import subprocess
 from tempfile import mkstemp
 from typing import Callable, List, Union
 from zipfile import ZipFile
@@ -227,12 +227,23 @@ def multiprocess_dispatch(
     return results
 
 
-def execute_command(cmd: str, debug: bool = False) -> int:
-    stdout_is_redirected = re.search(r"(?:^|\s)(?:>|1>|>>|1>>)\s*\S+", cmd)
-    if not debug and stdout_is_redirected is None:
-        cmd += " > /dev/null"
-    ret = system(cmd)
-    return ret
+def execute_command(cmd: Union[str, List[str]], debug: bool = False) -> int:
+    """
+    Run an external command and return its exit code.
+    A string runs through the shell; a list of arguments runs without one.
+    Unless debug is set, stdout is discarded.
+    """
+    if isinstance(cmd, str):
+        stdout_is_redirected = re.search(r"(?:^|\s)(?:>|1>|>>|1>>)\s*\S+", cmd)
+        if not debug and stdout_is_redirected is None:
+            cmd += " > /dev/null"
+        return subprocess.run(cmd, shell=True).returncode
+    stdout = None if debug else subprocess.DEVNULL
+    try:
+        return subprocess.run(cmd, stdout=stdout).returncode
+    except FileNotFoundError:
+        logging.error(f"Command not found: {cmd[0]}")
+        return 127
 
 
 def unzip_file(file: Path, method: str) -> None:
