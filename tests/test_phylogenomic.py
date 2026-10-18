@@ -418,7 +418,7 @@ class TestModule(unittest.TestCase):
             input_type="prot",
             debug=True,
         )
-        phylo.align_og_fasta()
+        phylo.align_orthologous_groups_fasta()
         og_fasta_dir = Path("../data") / "Phylogenomic_tree" / "OGs_fasta_aln"
         fasta_files = list(og_fasta_dir.glob("*"))
         self.assertEqual(len(fasta_files), 2137)
@@ -449,7 +449,7 @@ class TestModule(unittest.TestCase):
             input_type="prot",
             debug=True,
         )
-        phylo.create_supersequence_file()
+        phylo.create_superalignment_file()
         supersequence_file = Path("../data") / "Phylogenomic_tree" / "supersequence.fa"
         supersequence_parser = SeqIO.parse(str(supersequence_file), "fasta")
         num_records = 0
@@ -477,7 +477,7 @@ class TestModule(unittest.TestCase):
             input_type="prot",
             debug=True,
         )
-        phylo.filter_supersequence_aln()
+        phylo.filter_superalignment()
         supersequence_file = (
             Path("../data") / "Phylogenomic_tree" / "supersequence.fa-gb"
         )
@@ -510,7 +510,7 @@ class TestModule(unittest.TestCase):
             input_type="prot",
             debug=True,
         )
-        phylo.compute_tree()
+        phylo.compute_tree_iqtree()
         phylo.move_iqtree_files()
         directory_to_check = Path("../data/Phylogenomic_tree/iqtree")
         files = directory_to_check.glob("*")
