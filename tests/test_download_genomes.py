@@ -52,6 +52,16 @@ class TestModule(unittest.TestCase):
                 os.rmdir(os.path.join(root, name))
         os.rmdir(self.temp_dir)
 
+    @patch("pypgcf.download_genomes.utils.execute_command", return_value=0)
+    def test_download_command_keeps_species_name_as_one_argument(self, mock_run):
+        self.gd.taxon = "Pseudomonas aeruginosa"
+        self.gd.download_hydrated()
+        cmd = mock_run.call_args.args[0]
+        expected = ["datasets", "download", "genome", "taxon", "Pseudomonas aeruginosa"]
+        self.assertEqual(cmd[:5], expected)
+        filename = cmd[cmd.index("--filename") + 1]
+        self.assertEqual(filename, str(self.gd.out_dir / "dataset.zip"))
+
     @pytest.mark.external
     @pytest.mark.skipif(shutil.which("datasets") is None, reason="NCBI datasets CLI not installed")
     def test_download_hydrated(self):
