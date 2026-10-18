@@ -51,15 +51,10 @@ class SpeciesDemarcator:
         logging.debug(
             f"Performing FastANI: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
-        cmd = "fastANI --ql {} --rl {} -t {} -k {} --fragLen {} --minFraction {} -o {}".format(
-            org_list,
-            org_list,
-            self.fastani_cores,
-            self.kmer,
-            self.fraglen,
-            self.minfrac,
-            fout,
-        )
+        cmd = ["fastANI", "--ql", str(org_list), "--rl", str(org_list)]
+        cmd += ["-t", str(self.fastani_cores), "-k", str(self.kmer)]
+        cmd += ["--fragLen", str(self.fraglen), "--minFraction", str(self.minfrac)]
+        cmd += ["-o", str(fout)]
         ret = execute_command(cmd, debug=self.debug)
         if ret != 0:
             raise RuntimeError("fastANI command was not successful")
@@ -97,9 +92,15 @@ class SpeciesDemarcator:
             f"Running MCL clustering: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
         outdir = fastani_for_mcl.parent
-        mcxload_cmd = f"mcxload -abc {fastani_for_mcl} -o {outdir}/fastANI_mcx_mtrx.txt -write-tab {outdir}/fastANI_annot.tab"
-        mcl_cmd = f"mcl {outdir}/fastANI_mcx_mtrx.txt -te {self.mcl_cores} -I {self.inflation} -o {outdir}/fastANI_mcl_out.txt"
-        mcxdump_cmd = f"mcxdump -icl {outdir}/fastANI_mcl_out.txt -tabr {outdir}/fastANI_annot.tab -o {outdir}/fastANI_mcx_dump.txt"
+        matrix = str(outdir / "fastANI_mcx_mtrx.txt")
+        annotation = str(outdir / "fastANI_annot.tab")
+        clusters = str(outdir / "fastANI_mcl_out.txt")
+        mcxload_cmd = ["mcxload", "-abc", str(fastani_for_mcl), "-o", matrix]
+        mcxload_cmd += ["-write-tab", annotation]
+        mcl_cmd = ["mcl", matrix, "-te", str(self.mcl_cores), "-I", str(self.inflation)]
+        mcl_cmd += ["-o", clusters]
+        mcxdump_cmd = ["mcxdump", "-icl", clusters, "-tabr", annotation]
+        mcxdump_cmd += ["-o", str(outdir / "fastANI_mcx_dump.txt")]
         cmds = [mcxload_cmd, mcl_cmd, mcxdump_cmd]
 
         for cmd in cmds:

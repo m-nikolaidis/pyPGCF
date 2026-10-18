@@ -49,21 +49,20 @@ class TestSpeciesDemarcator(unittest.TestCase):
             [unittest.mock.call(str(f) + "\n") for f in files]
         )
 
-    @pytest.mark.skip(reason="Needs existing file")
-    @patch("pypgcf.utils.execute_command")
+    @patch("pypgcf.species_demarcation.execute_command")
     def test_perform_fastani(self, mock_execute_command):
         org_list = Path("/path/to/org_list.txt")
         fout = Path("/path/to/output.txt")
         mock_execute_command.return_value = 0
 
         self.demarcator.perform_fastani(org_list, fout)
-        cmd = (
-            f"fastANI --ql {org_list} --rl {org_list} -t {self.fastani_cores} -k {self.kmer} "
-            f"--fragLen {self.fraglen} --minFraction {self.minfrac} -o {fout}"
-        )
-        mock_execute_command.assert_called_once_with(cmd)
+        cmd = ["fastANI", "--ql", str(org_list), "--rl", str(org_list)]
+        cmd += ["-t", str(self.fastani_cores), "-k", str(self.kmer)]
+        cmd += ["--fragLen", str(self.fraglen), "--minFraction", str(self.minfrac)]
+        cmd += ["-o", str(fout)]
+        mock_execute_command.assert_called_once_with(cmd, debug=self.debug)
 
-    @patch("pypgcf.utils.execute_command")
+    @patch("pypgcf.species_demarcation.execute_command")
     def test_perform_fastani_failure(self, mock_execute_command):
         org_list = Path("/path/to/org_list.txt")
         fout = Path("/path/to/output.txt")
@@ -131,9 +130,9 @@ class TestSpeciesDemarcator(unittest.TestCase):
         )
         mock_rename.assert_called_once_with(*expected_rename)
 
-    @pytest.mark.skip(reason="Needs existing files to work")
-    @patch("utils.execute_command")
-    def test_run_mcl(self, mock_execute_command):
+    @patch("pypgcf.species_demarcation.SpeciesDemarcator.clean_mcl")
+    @patch("pypgcf.species_demarcation.execute_command")
+    def test_run_mcl(self, mock_execute_command, mock_clean_mcl):
         mock_execute_command.return_value = 0
 
         fastani_for_mcl = Path("/path/to/fastANI_for_mcl.txt")
@@ -141,7 +140,9 @@ class TestSpeciesDemarcator(unittest.TestCase):
         expected_fout = fastani_for_mcl.parent / "fastANI_clusters.tsv"
 
         self.assertEqual(actual_fout, expected_fout)
-        self.assertTrue(mock_execute_command.called)
+        programs = [c.args[0][0] for c in mock_execute_command.call_args_list]
+        self.assertEqual(programs, ["mcxload", "mcl", "mcxdump"])
+        mock_clean_mcl.assert_called_once_with(fastani_for_mcl.parent)
 
     @pytest.mark.skip(reason="Needs existing files to work")
     @patch("builtins.open", new_callable=mock_open, read_data="genome1\t0\n")
