@@ -22,7 +22,7 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 
 ### 2. Declare the real dependencies — DONE (pending push)
 - `pyproject.toml` lists the Python runtime dependencies (pandas, openpyxl, tqdm, biopython, requests, scipy) and `requires-python = ">=3.11,<3.13"`.
-- `pixi.toml` and `recipe.yaml` match that list, and also declare BLAST, DIAMOND and FastTree, which were missing.
+- `pixi.toml` and `recipe.yaml` match that list, and also declare BLAST and DIAMOND, which were missing. FastTree was dropped: phylogenomic now uses `iqtree --fast` (`pyPGCF phylogenomic --fast`), so no separate FastTree dependency is needed.
 - Version is set once in `pyproject.toml` (2.0.1). `pypgcf.__version__` reads it from package metadata. `recipe.yaml` had 2.0.1.2 and is now 2.0.1.
 - `tests/test_packaging.py` fails if the version, Python range or runtime dependencies drift between the three files.
 - Verified: a clean export of HEAD installs with `pip install .` on Python 3.11 and 3.12 and `import pypgcf.cli` works. The full suite passes.
