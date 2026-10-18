@@ -44,14 +44,17 @@ The Python packages (pandas, scipy, biopython, openpyxl, tqdm, requests) are ins
 | Module | Tools |
 | --- | --- |
 | Species demarcation | fastANI, MCL |
-| Orthologues | BLAST+ (`blastp`, `makeblastdb`), DIAMOND |
+| Orthologues | DIAMOND (proteins), or BLAST+ `blastn` and `makeblastdb` (CDS) |
 | Phylogenomic | MUSCLE, IQ-TREE |
 | eggNOG annotation | eggNOG-mapper |
 | smBGC | antiSMASH |
 | AMR | AMRFinderPlus |
 | CAZy | dbCAN |
+| Download | NCBI datasets CLI |
 
 The conda package lists all of them as dependencies. With pip, install only the tools for the modules you use.
+
+Each module checks for its tools before it starts, and lists any that are missing with the command to install them.
 
 Notes:
 1) The software should move to the bioconda channel in the near future
