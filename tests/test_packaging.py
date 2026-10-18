@@ -42,6 +42,13 @@ class TestPackagingConsistency(unittest.TestCase):
             with self.subTest(requirement=requirement):
                 self.assertIn(_requirement_name(requirement), recipe_names)
 
+    def test_package_version_matches_pyproject(self):
+        import pypgcf
+
+        if pypgcf.__version__ == "0+unknown":
+            self.skipTest("pypgcf is not installed, so no version metadata exists")
+        self.assertEqual(pypgcf.__version__, self.pyproject["project"]["version"])
+
     def test_python_range_matches_pyproject(self):
         self.assertEqual(
             self.pixi["dependencies"]["python"],
