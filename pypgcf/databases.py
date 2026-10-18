@@ -7,7 +7,7 @@ from typing import Union
 
 from Bio import SeqIO
 
-from pypgcf.config import DB_BASE_DIR
+from pypgcf.config import database_dir as resolve_database_dir
 from pypgcf.utils import (
     create_blastdb_cmd,
     createdmnddb_cmd,
@@ -21,10 +21,7 @@ from pypgcf.utils import (
 
 class CAZY_installer:
     def __init__(self, *, database_dir: Union[None, Path], cores: int, debug: bool):
-        if database_dir is None:
-            self.database_dir = DB_BASE_DIR / "CAZY"
-        else:
-            self.database_dir = database_dir / "CAZY"
+        self.database_dir = resolve_database_dir("cazy", database_dir)
         self.database_dir.mkdir(exist_ok=True, parents=True)
         self.cores = cores
         self.debug = debug
@@ -48,10 +45,7 @@ class CAZY_installer:
 
 class VF_installer:
     def __init__(self, *, database_dir: Union[None, Path], debug: bool):
-        if database_dir is None:
-            self.database_dir = DB_BASE_DIR / "Virulence"
-        else:
-            self.database_dir = database_dir / "Virulence"
+        self.database_dir = resolve_database_dir("virulence", database_dir)
         self.database_dir.mkdir(exist_ok=True, parents=True)
         self.urls = [
             "https://www.mgc.ac.cn/VFs/Down/VFDB_setA_pro.fas.gz",
@@ -133,10 +127,7 @@ class VF_installer:
 
 class AMR_installer:
     def __init__(self, *, database_dir: Union[None, Path], debug: bool):
-        if database_dir is None:
-            self.database_dir = DB_BASE_DIR / "AMR"
-        else:
-            self.database_dir = database_dir / "AMR"
+        self.database_dir = resolve_database_dir("amr", database_dir)
         self.database_dir.mkdir(exist_ok=True, parents=True)
         self.debug = debug
 
@@ -158,11 +149,9 @@ class AMR_installer:
 
 class SMBGC_installer:
     def __init__(self, *, database_dir: Union[None, Path], debug: bool = False):
-        if database_dir is not None:
-            self.database_dir = database_dir / "smBGC"
+        self.database_dir = resolve_database_dir("smbgc", database_dir)
+        if self.database_dir is not None:
             self.database_dir.mkdir(exist_ok=True, parents=True)
-        else:
-            self.database_dir = None
         self.debug = debug
 
     def install_database(self) -> None:
@@ -189,10 +178,7 @@ class SMBGC_installer:
 class EGGNOG_installer:
     def __init__(self, *, database_dir: Union[None, Path] = None, debug: bool = False):
         self.debug = debug
-        if database_dir is None:
-            self.database_dir = DB_BASE_DIR / "site-packages" / "data"
-        else:
-            self.database_dir = database_dir / "eggNOG"
+        self.database_dir = resolve_database_dir("eggnog", database_dir)
         self.database_dir.mkdir(exist_ok=True, parents=True)
 
     def install_database(self) -> None:
