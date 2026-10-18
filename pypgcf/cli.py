@@ -178,8 +178,9 @@ def add_orthologues_subparser(subparsers):
     ref_exclusive.add_argument("-ref_list", help="List of reference strains to use")
     orthologues_basic.add_argument(
         "--input_type",
-        help="Type of input [proteins (DIAMOND) or CDS (BLASTN)]",
+        help="Type of input: prot (DIAMOND) or cds (BLASTN)",
         default=software_defaults["general"]["input_type"],
+        choices=["prot", "cds"],
     )
     orthologues_blast = orthologues.add_argument_group("DIAMOND/BLASTN options")
     orthologues_blast.add_argument(
