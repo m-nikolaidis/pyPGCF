@@ -13,14 +13,14 @@ import pytest
 #             database_dir=self.database_dir, cores=self.cores, verbose=self.verbose
 #         )
 #
-#     @patch("context.cazy.execute_command")
+#     @patch("pypgcf.cazy.execute_command")
 #     def test_setup_valid(self, mock_execute_command):
 #         mock_execute_command.return_value = 0
 #         self.cazy_builder.setup()
 #         build_cmd = f"dbcan_build --cores 4 --db-dir {self.database_dir}/CAZY --clean"
 #         mock_execute_command.assert_called_once_with(build_cmd)
 #
-#     @patch("context.cazy.execute_command")
+#     @patch("pypgcf.cazy.execute_command")
 #     def test_setup_invalid(self, mock_execute_command):
 #         mock_execute_command.side_effect = Exception("Command failed")
 #         with self.assertRaises(Exception):
@@ -33,7 +33,7 @@ import pytest
 
 @pytest.mark.skip(reason="Command doesn't exist in test environment")
 class TestCAZYInstaller(unittest.TestCase):
-    @patch("context.utils.execute_command")
+    @patch("pypgcf.utils.execute_command")
     @patch("pathlib.Path.mkdir")
     @patch("os.system")
     def test_install_database(self, mock_system, mock_mkdir, mock_execute_command):
@@ -50,9 +50,9 @@ class TestCAZYInstaller(unittest.TestCase):
     reason="Will add in next patch. Command doesn't exist in test environment"
 )
 class TestVFInstaller(unittest.TestCase):
-    @patch("context.utils.execute_command")
-    @patch("context.utils.download_file")
-    @patch("context.utils.get_remote_file_size")
+    @patch("pypgcf.utils.execute_command")
+    @patch("pypgcf.utils.download_file")
+    @patch("pypgcf.utils.get_remote_file_size")
     @patch("pathlib.Path.mkdir")
     @patch("Bio.SeqIO.parse", return_value=[])
     @patch("builtins.open", new_callable=unittest.mock.mock_open)
