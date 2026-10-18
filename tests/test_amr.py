@@ -7,7 +7,7 @@ from context import amr
 
 
 class TestAMRAnalyzer(unittest.TestCase):
-    @patch("context.amr.calc_avail_dispatchers")
+    @patch("pypgcf.amr.calc_avail_dispatchers")
     def test_init(self, mock_calc_avail_dispatchers):
         mock_calc_avail_dispatchers.return_value = 4
 
@@ -44,8 +44,8 @@ class TestAMRAnalyzer(unittest.TestCase):
         self.assertEqual(analyzer.database_dir, None)
         self.assertEqual(analyzer.concurrent_jobs, 1)  # Non-concurrent case
 
-    @patch("context.amr.Path.mkdir")
-    @patch("context.amr.multiprocess_dispatch")
+    @patch("pypgcf.amr.Path.mkdir")
+    @patch("pypgcf.amr.multiprocess_dispatch")
     def test_search_amr(self, mock_multiprocess_dispatch, mock_mkdir):
         analyzer = amr.AMR_analyzer(
             fasta_files_list=[Path("/test/fasta1"), Path("/test/fasta2")],
@@ -60,7 +60,7 @@ class TestAMRAnalyzer(unittest.TestCase):
 
         analyzer.search_amr()
 
-        mock_mkdir.assert_called_once_with(exist_ok=True)
+        mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
         expected_cmds = [
             "amrfinder --plus -i -1 -o /test/out/AMR/amrfinder/fasta1.txt --threads 2 -d /test/database/AMR -p /test/fasta1 --quiet",
             "amrfinder --plus -i -1 -o /test/out/AMR/amrfinder/fasta2.txt --threads 2 -d /test/database/AMR -p /test/fasta2 --quiet",
@@ -71,13 +71,14 @@ class TestAMRAnalyzer(unittest.TestCase):
             3,
             show_progress=True,
             description="Scanning for AMR genes",
+            debug=False,
         )
 
     @pytest.mark.skip(reason="Not implemented")
-    @patch("context.amr.read_csv")
-    @patch("context.amr.concat")
-    @patch("context.amr.Path.glob")
-    @patch("context.amr.DataFrame.to_excel")
+    @patch("pypgcf.amr.read_csv")
+    @patch("pypgcf.amr.concat")
+    @patch("pypgcf.amr.Path.glob")
+    @patch("pypgcf.amr.DataFrame.to_excel")
     def test_parse_results(self, mock_to_excel, mock_glob, mock_concat, mock_read_csv):
         mock_glob.return_value = [
             Path("/test/out/AMR/res1.txt"),
