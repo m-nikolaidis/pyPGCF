@@ -37,6 +37,13 @@ Repository = "https://github.com/m-nikolaidis/pyPGCF"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
+markers = [
+    "external: needs external bioinformatics tools or network access",
+    "data: needs test data that is not included in the repository",
+    "integration: downloads real databases (slow)",
+    "slow: long-running test",
+]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
