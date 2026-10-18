@@ -31,7 +31,7 @@ class CAZY_analyzer:
         self.cores = cores
         self.evalue = evalue
         # The asigned column names will be the same, need to fix the homology search function
-        self.database_dir = database_dir / "CAZY"
+        self.database_dir = database_dir
         self.out_dir = out_dir / "CAZY"
         self.search_res_dir = out_dir / "CAZY" / "CAZY_search"
         self.fasta_files = fasta_files_list

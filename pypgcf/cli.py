@@ -15,7 +15,8 @@ from tqdm import tqdm
 from pypgcf import utils
 from pypgcf.amr import AMR_analyzer
 from pypgcf.cazy import CAZY_analyzer
-from pypgcf.config import software_defaults, DB_BASE_DIR, MODULE_TOOLS
+from pypgcf.config import software_defaults, MODULE_TOOLS
+from pypgcf.config import database_dir as resolve_database_dir
 from pypgcf.core import Core_identifier
 from pypgcf.databases import (
     AMR_installer,
@@ -752,10 +753,7 @@ def run_eggnog(args):
     if input_type is None:
         raise RuntimeError("eggNOG: Input type cannot be None")
 
-    if args.get("db") is None:
-        database_dir = Path(DB_BASE_DIR) / "site-packages" / "data"
-    else:
-        database_dir = Path(args["db"]) / "eggNOG"
+    database_dir = resolve_database_dir("eggnog", args.get("db"))
 
     fasta_files = args["fasta_files"]
 
@@ -809,9 +807,7 @@ def run_smbgc(args):
     genefinding_tool = args.get("genefinding_tool")
     cores = int(args.get("cores", 0))
 
-    database_dir = args.get("db", None)
-    if database_dir is not None:
-        database_dir = Path(database_dir) / "smBGC"
+    database_dir = resolve_database_dir("smbgc", args.get("db"))
     # antismash gets the default database if nothing is supplied
 
     concurrent = True
@@ -845,11 +841,7 @@ def run_virulence(args):
     evalue = float(args["evalue"])
     dmnd_sensitivity = args["dmnd_sensitivity"]
     debug = args["debug"]
-    if args.get("db") is None:
-        database_dir = Path(DB_BASE_DIR)
-    else:
-        database_dir = Path(args["db"])
-    database_dir = database_dir / "Virulence"
+    database_dir = resolve_database_dir("virulence", args.get("db"))
     concurrent = True
     if args["no_concurrent"]:
         concurrent = False
@@ -875,11 +867,7 @@ def run_cazy(args):
     input_type = args["input_type"]
     cores = int(args["cores"])
     evalue = float(args["evalue"])
-    if args.get("db") is None:
-        database_dir = Path(DB_BASE_DIR)
-    else:
-        database_dir = Path(args["db"])
-    database_dir = database_dir / "CAZY"
+    database_dir = resolve_database_dir("cazy", args.get("db"))
     concurrent = True
     if args["no_concurrent"]:
         concurrent = False
@@ -904,10 +892,7 @@ def run_amr(args):
     out_dir = Path(args["out"])
     input_type = args["input_type"]
     cores = int(args["cores"])
-    if args.get("db") is None:
-        database_dir = Path(DB_BASE_DIR) / "AMR"
-    else:
-        database_dir = Path(args["db"]) / "AMR"
+    database_dir = resolve_database_dir("amr", args.get("db"))
     concurrent = True
     if args["no_concurrent"]:
         concurrent = False

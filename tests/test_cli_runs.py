@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, call, MagicMock
 from pathlib import Path
 from context import cli
+from pypgcf import config as cli_config
 import pytest
 
 
@@ -207,7 +208,7 @@ class TestRunFunctions(unittest.TestCase):
 
     @patch("pypgcf.cli.EggNOGRunner")
     @patch("pypgcf.cli.EggNOGParser")
-    @patch("pypgcf.cli.DB_BASE_DIR", new_callable=Path)
+    @patch("pypgcf.config.DB_BASE_DIR", new_callable=Path)
     def test_run_eggnog(self, mock_DB_BASE_DIR, mock_EggNOGParser, mock_EggNOGRunner):
         args = {
             "debug": True,
@@ -335,7 +336,7 @@ class TestRunFunctions(unittest.TestCase):
 
         mock_VF_analyzer.assert_called_once_with(
             fasta_files_list=["file1.fasta", "file2.fasta"],
-            database_dir=Path(cli.DB_BASE_DIR) / "Virulence",
+            database_dir=cli_config.DB_BASE_DIR / "Virulence",
             out_dir=Path("output_directory"),
             input_type="prot",
             available_cores=cli.software_defaults["system"]["usable_cores"],
@@ -368,7 +369,7 @@ class TestRunFunctions(unittest.TestCase):
         mock_CAZY_analyzer.assert_called_once_with(
             fasta_files_list=["file1.fasta", "file2.fasta"],
             out_dir=Path("output_directory"),
-            database_dir=Path(cli.DB_BASE_DIR) / "CAZY",
+            database_dir=cli_config.DB_BASE_DIR / "CAZY",
             input_type="prot",
             available_cores=cli.software_defaults["system"]["usable_cores"],
             cores=8,
@@ -396,7 +397,7 @@ class TestRunFunctions(unittest.TestCase):
 
         mock_AMR_analyzer.assert_called_once_with(
             fasta_files_list=["file1.fasta", "file2.fasta"],
-            database_dir=Path(cli.DB_BASE_DIR) / "AMR",
+            database_dir=cli_config.DB_BASE_DIR / "AMR",
             out_dir=Path("output_directory"),
             input_type="prot",
             available_cores=cli.software_defaults["system"]["usable_cores"],

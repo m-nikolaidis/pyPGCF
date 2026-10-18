@@ -38,10 +38,7 @@ class AMR_analyzer:
             self.concurrent_jobs = 0
         if self.concurrent_jobs == 0:
             self.concurrent_jobs = 1
-        if database_dir is None:
-            self.database_dir = None
-        else:
-            self.database_dir = database_dir / "AMR"
+        self.database_dir = database_dir
 
     def search_amr(self) -> None:
         cmds = []
