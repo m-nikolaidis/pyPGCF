@@ -310,6 +310,15 @@ class TestSMBGCInstaller:
         with pytest.raises(RuntimeError, match="Something went wrong"):
             installer.install_database()
 
+    @patch('pypgcf.databases.execute_command', return_value=1)
+    def test_install_failure_raises_without_debug(self, mock_execute, temp_db_dir):
+        """A failed download must not be reported as installed"""
+        installer = SMBGC_installer(database_dir=temp_db_dir, debug=False)
+
+        with pytest.raises(RuntimeError, match="Something went wrong"):
+            installer.install_database()
+        assert not (installer.database_dir / "log.txt").exists()
+
 
 class TestEGGNOGInstaller:
     
@@ -366,6 +375,15 @@ class TestEGGNOGInstaller:
         
         with pytest.raises(RuntimeError, match="Something went wrong"):
             installer.install_database()
+
+    @patch('pypgcf.databases.execute_command', return_value=1)
+    def test_install_failure_raises_without_debug(self, mock_execute, temp_db_dir):
+        """A failed download must not be reported as installed"""
+        installer = EGGNOG_installer(database_dir=temp_db_dir, debug=False)
+
+        with pytest.raises(RuntimeError, match="Something went wrong"):
+            installer.install_database()
+        assert not (installer.database_dir / "log.txt").exists()
 
 
 # Pytest configuration for marking integration tests

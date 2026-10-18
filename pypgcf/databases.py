@@ -157,13 +157,11 @@ class SMBGC_installer:
         if self.database_dir is not None:
             cmd += ["--database-dir", str(self.database_dir)]
         ret = execute_command(cmd, debug=self.debug)
-        if self.debug:
-            if ret == 0:
-                logging.debug("Installed antiSMASH database successfully")
-            else:
-                raise RuntimeError(
-                    "Something went wrong with the download of antiSMASH database"
-                )
+        if ret != 0:
+            raise RuntimeError(
+                "Something went wrong with the download of antiSMASH database"
+            )
+        logging.debug("Installed antiSMASH database successfully")
         if self.database_dir is not None:
             build_date = datetime.now().strftime("%D")
             with open(self.database_dir / "log.txt", "w") as wf:
@@ -183,13 +181,11 @@ class EGGNOG_installer:
         if not self.debug:
             cmd.append("-q")
         ret = execute_command(cmd, debug=self.debug)
-        if self.debug:
-            if ret == 0:
-                logging.debug("Installed eggNOG database successfully")
-            else:
-                raise RuntimeError(
-                    "Something went wrong with the download of eggNOG database"
-                )
+        if ret != 0:
+            raise RuntimeError(
+                "Something went wrong with the download of eggNOG database"
+            )
+        logging.debug("Installed eggNOG database successfully")
         build_date = datetime.now().strftime("%D")
         with open(self.database_dir / "log.txt", "w") as wf:
             wf.write(f"# Database downloaded and built: {build_date}{linesep}")
