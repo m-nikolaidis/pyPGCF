@@ -439,6 +439,11 @@ def add_download_subparser(subparsers):
         action="store_true",
     )
     download.add_argument(
+        "--dehydrated",
+        help="Download a dehydrated dataset and rehydrate it. Recommended for large downloads",
+        action="store_true",
+    )
+    download.add_argument(
         "--perform_fastani",
         help="Perform fastANI once the genomes are downloaded",
         action="store_true",
@@ -930,8 +935,13 @@ def run_download(args):
     )
     logging.info(f"Starting download: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
     downloader.create_output_directories()
-    downloader.download_hydrated()
-    downloader.extract_dataset_zip()
+    if args["dehydrated"]:
+        downloader.download_dehydrated()
+        downloader.extract_dataset_zip()
+        downloader.rehydrate_dataset()
+    else:
+        downloader.download_hydrated()
+        downloader.extract_dataset_zip()
     downloader.save_gbff_dir_to_memory()
     downloader.process_gbff_files()
     downloader.write_annotations()
@@ -1285,3 +1295,7 @@ def main():
 
     elif args["module"] == "workflow":
         run_workflow(args)
+
+
+if __name__ == "__main__":
+    main()

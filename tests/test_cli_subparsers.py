@@ -300,7 +300,16 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["out"], "output_dir")
         self.assertEqual(args["taxon"], "taxon1")
         self.assertEqual(args["keep_plasmids"], True)
+        self.assertEqual(args["dehydrated"], False)
         self.assertEqual(args.get("cores"), None)
+
+    def test_add_download_subparser_dehydrated(self):
+        args = vars(
+            self.parser.parse_args(
+                ["download", "-out", "output_dir", "-taxon", "taxon1", "--dehydrated"]
+            )
+        )
+        self.assertEqual(args["dehydrated"], True)
 
     def test_add_virulence_subparser(self):
         # Simulate CLI input for the phylogenomic module

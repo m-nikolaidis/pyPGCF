@@ -83,6 +83,40 @@ class GenomeDownloader:
             res = utils.execute_command(cmd)
         return res
 
+    def download_dehydrated(self):
+        cmd = " ".join(
+            [
+                "datasets download genome taxon",
+                str(self.taxon),
+                "--include gbff",
+                f"--assembly-level {self.assembly_level}",
+                "--dehydrated",
+                f"--assembly-source {self.assembly_source} --filename {self.out_dir}/dataset.zip",
+            ]
+        )
+        if self.limit_to_ref:
+            cmd += " --reference"
+        if self.debug:
+            cmd += " --preview"
+        if self.debug:
+            res = utils.execute_command(cmd, debug=True)
+        else:
+            res = utils.execute_command(cmd)
+        return res
+
+    def rehydrate_dataset(self):
+        """
+        Fetch the data files of an extracted dehydrated dataset.
+        Must be called after extract_dataset_zip, as datasets expects
+        the directory containing ncbi_dataset/
+        """
+        cmd = f"datasets rehydrate --directory {self.out_dir}"
+        if self.debug:
+            res = utils.execute_command(cmd, debug=True)
+        else:
+            res = utils.execute_command(cmd)
+        return res
+
     def download_from_file(self): ...
 
     def extract_dataset_zip(self) -> None:
@@ -184,8 +218,7 @@ class GenomeDownloader:
 
         record, locus_tag, location, _ = data
         if location is None:
-            return SeqRecord()
-            # TODO: Returning an empty seqrecord might give an error, was giving error in unittests
+            return SeqRecord(Seq(""), id=locus_tag, name="Not found")
         if location.strand == -1:
             seq = location.extract(record.seq).reverse_complement()
         else:

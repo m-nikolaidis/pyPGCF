@@ -55,6 +55,42 @@ class TestModule(unittest.TestCase):
         res = self.gd.download_hydrated()
         self.assertIs(res, 0)
 
+    @patch("context.utils.execute_command", return_value=0)
+    def test_download_dehydrated_cmd(self, mock_execute_command):
+        self.gd.debug = False
+        res = self.gd.download_dehydrated()
+        self.assertIs(res, 0)
+        cmd = mock_execute_command.call_args.args[0]
+        self.assertTrue(cmd.startswith("datasets download genome taxon 1234"))
+        self.assertIn("--dehydrated", cmd)
+        self.assertIn(f"--filename {self.temp_dir}/dataset.zip", cmd)
+        self.assertNotIn("--reference", cmd)
+
+    @patch("context.utils.execute_command", return_value=0)
+    def test_download_dehydrated_limit_to_ref(self, mock_execute_command):
+        self.gd.debug = False
+        self.gd.limit_to_ref = True
+        self.gd.download_dehydrated()
+        cmd = mock_execute_command.call_args.args[0]
+        self.assertIn("--dehydrated", cmd)
+        self.assertIn("--reference", cmd)
+
+    @patch("context.utils.execute_command", return_value=0)
+    def test_rehydrate_dataset(self, mock_execute_command):
+        self.gd.debug = False
+        res = self.gd.rehydrate_dataset()
+        self.assertIs(res, 0)
+        mock_execute_command.assert_called_once_with(
+            f"datasets rehydrate --directory {self.temp_dir}"
+        )
+
+    @patch("context.utils.execute_command", return_value=0)
+    def test_rehydrate_dataset_debug(self, mock_execute_command):
+        self.gd.rehydrate_dataset()
+        mock_execute_command.assert_called_once_with(
+            f"datasets rehydrate --directory {self.temp_dir}", debug=True
+        )
+
     @pytest.mark.skip(reason="Expects existing file")
     def test_extract_dataset_zip(self):
         expected_directory = Path(self.gd.out_dir / "ncbi_dataset")
