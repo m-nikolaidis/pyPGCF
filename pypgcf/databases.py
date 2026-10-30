@@ -131,19 +131,16 @@ class AMR_installer:
         self.database_dir.mkdir(exist_ok=True, parents=True)
         self.debug = debug
 
-    def install_database_native(self) -> None:
+    def install_database(self) -> None:
         """
         Update the amrfinder database from NCBI
         Return: None
         """
-        if self.debug:
-            cmd = f"amrfinder_update -d {self.database_dir} --threads 2"
-        else:
-            cmd = f"amrfinder_update -d {self.database_dir} --threads 2 --quiet"
-        if self.debug:
-            execute_command(cmd, debug=True)
-        else:
-            execute_command(cmd)
+        cmd = ["amrfinder_update", "-d", str(self.database_dir)]
+        if not self.debug:
+            cmd.append("--quiet")
+        if execute_command(cmd, debug=self.debug) != 0:
+            logging.error("amrfinder_update failed to install the AMR database")
         return None
 
 
