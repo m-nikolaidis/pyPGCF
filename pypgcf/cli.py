@@ -292,6 +292,11 @@ def add_phylogenomic_subparser(subparsers):
         help="Specific evolutionary model for tree calculation with IQTree2. Ignored by other methods",
         default=software_defaults["phylogenomic"]["tree_model"],
     )
+    phylogenomic_tree.add_argument(
+        "--fast",
+        help="Use IQTree2's fast search (iqtree --fast). Ignored by other methods",
+        action="store_true",
+    )
 
 
 def add_eggnog_subparser(subparsers):
@@ -723,6 +728,7 @@ def run_phylogenomic(args):
     tree_model = args["tree_model"]
     tree_method = args["method"]
     input_type = args["input_type"]
+    fast = args["fast"]
     debug = args["debug"]
     fasta_files = args["fasta_files"]
     phylogenomic = Phylogenomic(
@@ -735,6 +741,7 @@ def run_phylogenomic(args):
         tree_method=tree_method,
         iqtree_model=tree_model,
         input_type=input_type,
+        fast=fast,
         debug=debug,
     )
     phylogenomic.run_phylogenomic()

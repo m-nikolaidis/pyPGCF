@@ -131,6 +131,7 @@ class TestRunFunctions(unittest.TestCase):
             "tree_model": "LG+G4",
             "method": "IQTree",
             "input_type": "prot",
+            "fast": True,
             "debug": False,
             "fasta_files": ["file1.fasta", "file2.fasta"],
         }
@@ -149,6 +150,7 @@ class TestRunFunctions(unittest.TestCase):
             tree_method="IQTree",
             iqtree_model="LG+G4",
             input_type="prot",
+            fast=True,
             debug=False,
         )
         mock_instance.run_phylogenomic.assert_called_once()
