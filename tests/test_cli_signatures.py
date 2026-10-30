@@ -1,6 +1,6 @@
 """
 Every run_<module> function must call its analysis classes with arguments
-that the real constructors accept. The other CLI tests mock these classes,
+that the real constructors accept, and only call methods that exist. The other CLI tests mock these classes,
 so a renamed keyword would otherwise only fail on a real run.
 """
 
@@ -8,7 +8,7 @@ import argparse
 import inspect
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, create_autospec, patch
 
 from pypgcf import cli
 
@@ -56,7 +56,8 @@ class TestRunFunctionSignatures(unittest.TestCase):
             def recorder(name):
                 def record(*args, **kwargs):
                     calls.append((name, args, kwargs))
-                    return MagicMock()
+                    # Rejects methods the real class does not define
+                    return create_autospec(real[name], instance=True)
 
                 return MagicMock(side_effect=record)
 
