@@ -12,11 +12,10 @@ OPTIONS = {
     "Calculate_orthologues": ["Yes", "No"],
     "Calculate_cores": ["Yes", "No"],
     "Calculate_fingerprints": ["Yes", "No"],
-    "Calculate_entire_phylogenomic_tree": ["NJ", "IQTree", "Fasttree", "No"],
+    "Calculate_entire_phylogenomic_tree": ["NJ", "IQTree", "No"],
     "Calculate_group_representatives_phylogenomic_tree": [
         # "NJ",
         "IQTree",
-        "Fasttree",
         "No",
     ],
     "Calculate_EGGNOG_on_Group_representatives": ["Yes", "No"],

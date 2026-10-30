@@ -170,7 +170,7 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["no_keep_fasta"], False)
         self.assertEqual(args["tree_model"], "TEST")
 
-    def test_add_phylogenomic_subparser_fasttree(self):
+    def test_add_phylogenomic_subparser_iqtree_method(self):
         # Simulate CLI input for the phylogenomic module
         args = vars(
             self.parser.parse_args(
@@ -183,7 +183,7 @@ class TestArgumentParsing(unittest.TestCase):
                     "-fasta_dir",
                     "fasta_dir",
                     "--method",
-                    "Fasttree",
+                    "IQTree",
                 ]
             )
         )
@@ -193,7 +193,7 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["out"], "output_dir")
         self.assertEqual(args["input_type"], "prot")
         self.assertNotEqual(args["cores"], 0)
-        self.assertEqual(args["method"], "Fasttree")
+        self.assertEqual(args["method"], "IQTree")
         self.assertEqual(args["no_keep_fasta"], False)
         self.assertEqual(args["tree_model"], "TEST")
         self.assertFalse(args["fast"])

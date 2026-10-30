@@ -368,21 +368,6 @@ class Phylogenomic:
         """
         raise NotImplementedError("Not implemented yet")
 
-    def compute_tree_fasttree(self):
-        """
-        Compute the phylogenomic tree using FastTree
-        """
-        superalignment_file = self.out_dir / "superalignment.fa-gb"
-        if self.input_type == "nt" or self.input_type == "cds":
-            cmd = f"fasttree -nt -gtr {superalignment_file}"
-        else:  # prot
-            cmd = f"fasttree -lg {superalignment_file}"
-        if not self.debug:
-            cmd += " -quiet"
-        fout = self.out_dir / "superalignment_Fasttree.nwk"
-        cmd += f" > {fout}"
-        _ = execute_command(cmd, debug=self.debug)
-
     def compute_tree_iqtree(self):
         """
         Compute the phylogenomic tree using IQtree3
@@ -438,8 +423,6 @@ class Phylogenomic:
         print(
             f"Computing phylogenomic tree: {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}"
         )
-        if self.tree_method == "Fasttree":
-            self.compute_tree_fasttree()
         if self.tree_method == "NJ":
             self.compute_tree_bionj()
         if self.tree_method == "IQTree":
