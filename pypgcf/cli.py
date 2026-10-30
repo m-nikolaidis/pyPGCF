@@ -803,7 +803,7 @@ def run_eggnog(args):
 
     parser = EggNOGParser(
         fasta_files_list=fasta_files,
-        core_proteins_table_f=core_proteins_file_list,  # Accepts List[Path] or None
+        core_protein_table_file_list=core_proteins_file_list,  # List[Path] or None
         out_dir=out_dir,
         debug=debug,
     )
