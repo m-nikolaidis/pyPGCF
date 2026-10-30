@@ -8,20 +8,16 @@ preview = ["pixi-build"]
 
 [tasks]
 pyPGCF = "python -m pypgcf"
-test = "pytest tests/ -v"
 
+# Core: species demarcation, orthologues, core, phylogenomic and download
 [dependencies]
 python = ">=3.11,<3.13"
 iqtree = ">=3.0.1,<4"
 muscle = "==3.8.1551"
 blast = "*"
 diamond = "*"
-eggnog-mapper = ">=2.1.13,<3"
 fastani = ">=1.34,<2"
 mcl = ">=22.282,<23"
-dbcan = ">=5.2.8,<6"
-ncbi-amrfinderplus = ">=3.12.8,<5"
-antismash = ">=8.0.4,<9"
 pip-system-certs = ">=5.3,<6"
 ncbi-datasets-cli = ">=18.21.0,<19"
 pandas = ">=3.0.1, <4"
@@ -31,6 +27,24 @@ tqdm = ">=4.67.3, <5"
 biopython = ">=1.8, <2"
 requests = ">=2.32.5, <3"
 truststore = ">=0.10.5,<0.11"
+
+# Functional annotation modules: eggnog, smbgc, cazy, amr
+[feature.full.dependencies]
+eggnog-mapper = "==2.1.13"
+antismash = ">=8.0.4,<9"
+dbcan = ">=5.2.8,<6"
+ncbi-amrfinderplus = ">=3.12.8,<5"
+
+[feature.test.dependencies]
+pytest = "*"
+
+[feature.test.tasks]
+test = "pytest tests/ -v"
+
+[environments]
+default = { solve-group = "default" }
+full = { features = ["full"], solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
 
 [package.build.source]
 path = "."
