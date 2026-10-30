@@ -107,7 +107,7 @@ class CAZY_analyzer:
             cazy_domain = "".join([s for s in cazy_domain if not s.isdigit()])
             cazy_domains[idx] = cazy_domain
         cazy_domains = set(cazy_domains)
-        return ";".join(cazy_domains)
+        return ";".join(sorted(cazy_domains))
 
     def parse_results(self) -> None:
         tool_cutoff = 3  # Number of tools for CAZyome annotation (3 == all)
