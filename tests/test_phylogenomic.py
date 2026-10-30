@@ -388,6 +388,19 @@ class TestModule(unittest.TestCase):
             phylo.compute_tree_iqtree()
         return run.call_args[0][0]
 
+    def test_filter_superalignment_keeps_conserved_columns_for_few_genomes(self):
+        with TemporaryDirectory() as tmp_dir:
+            tmp = Path(tmp_dir)
+            protein = Seq("MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEK")
+            records = [SeqRecord(protein, id=g) for g in ["G1", "G2", "G3"]]
+            SeqIO.write(records, tmp / "superalignment.fa", "fasta")
+            phylo = phylogenomic.Phylogenomic.__new__(phylogenomic.Phylogenomic)
+            phylo.out_dir = tmp
+            phylo.filter_superalignment()
+            filtered = list(SeqIO.parse(tmp / "superalignment.fa-gb", "fasta"))
+        # Fixed thresholds for about 16 genomes removed every column here
+        self.assertEqual(len(filtered[0].seq), len(records[0].seq))
+
     def test_iqtree_command_uses_fast_only_when_requested(self):
         self.assertNotIn("--fast", self._iqtree_command(fast=False))
         self.assertIn("--fast", self._iqtree_command(fast=True))

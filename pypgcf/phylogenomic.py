@@ -335,15 +335,9 @@ class Phylogenomic:
     def filter_superalignment(self):
         """Filter the superalignment using Gblocks with default parameters"""
         aln = AlignIO.read(self.out_dir / "superalignment.fa", "fasta")
-        options = Options(
-            IS=9,  # Minimum Number Of Sequences For A Conserved Position
-            FS=14,  # Minimum Number Of Sequences For A Flank Position
-            CP=8,  # Maximum Number Of Contiguous Nonconserved Positions
-            BL1=10,  # Minimum Length Of A Block, 1st iteration
-            BL2=10,  # Minimum Length Of A Block, 2nd iteration
-            GT=0,  # Maximum Number of Allowed Gaps For Any Position
-            GC="-",  # Definition of Gap Characters
-        )
+        # Gblocks defaults: the minimum numbers of sequences for conserved and
+        # flank positions scale with the number of genomes, no gaps allowed
+        options = Options.default()
         mask = compute_mask((record.seq for record in aln), options)
         for record in aln:
             record.seq = Seq(trim_sequence(record.seq, mask))
