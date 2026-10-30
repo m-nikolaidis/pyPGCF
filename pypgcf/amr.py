@@ -42,20 +42,12 @@ class AMR_analyzer:
         for query_file in self.fasta_files:
             outfile = outdir / (query_file.stem + ".txt")
 
-            if self.database_dir is None:
-                cmd = (
-                    f"amrfinder --plus -i -1 -o {outfile} --threads {self.blast_cores}"
-                )
-            else:
-                cmd = f"amrfinder --plus -i -1 -o {outfile} --threads {self.blast_cores} -d {self.database_dir}"
-            if self.protein:
-                cmd += f" -p {query_file}"
-            else:
-                cmd += f" -n {query_file}"
-            if not self.debug:
-                cmd += " --quiet"
-            else:
-                cmd += " --debug"
+            cmd = ["amrfinder", "--plus", "-i", "-1", "-o", str(outfile)]
+            cmd += ["--threads", str(self.blast_cores)]
+            if self.database_dir is not None:
+                cmd += ["-d", str(self.database_dir)]
+            cmd += ["-p" if self.protein else "-n", str(query_file)]
+            cmd.append("--debug" if self.debug else "--quiet")
             cmds.append(cmd)
 
         _ = multiprocess_dispatch(
