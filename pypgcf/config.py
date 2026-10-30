@@ -11,8 +11,12 @@ TEST_DATA_DIR = Path(__file__).parent / ".." / "test_data/"
 
 system_cores = cpu_count()
 usable_cores = system_cores - 2
-default_no_concurrent = False
 default_debug = False
+
+
+def default_num_concurrent(threads_per_job: int) -> int:
+    """Return the number of jobs that fit within the available cores."""
+    return max(1, usable_cores // threads_per_job)
 
 software_defaults = {
     "system": {
@@ -37,7 +41,6 @@ software_defaults = {
         "cores": min(6, usable_cores),
         "evalue": 1e-5,
         "dmnd_sensitivity": "very-sensitive",
-        "no_concurrent": default_no_concurrent,
         "no_filter_orthologues": False,
         "debug": default_debug,
     },
@@ -70,14 +73,12 @@ software_defaults = {
         "genefinding_tool": "prodigal",
         "valid_strictness": ["loose", "relaxed", "strict"],
         "genefinding_tools": ["prodigal"],
-        "no_concurrent": default_no_concurrent,
         "debug": default_debug,
     },
     "virulence": {
         "blast_cores": min(6, usable_cores),
         "blast_evalue": 1e-5,
         "dmnd_sensitivity": "very-sensitive",
-        "no_concurrent": default_no_concurrent,
         "debug": default_debug,
         "input_type": "prot",
         "valid_input_types": ["prot", "cds"],
@@ -85,7 +86,6 @@ software_defaults = {
     "cazy": {
         "cores": min(6, usable_cores),
         "evalue": 1e-5,
-        "no_concurrent": default_no_concurrent,
         "debug": default_debug,
         "input_type": "prot",
         "valid_input_types": ["prot", "cds"],
@@ -93,7 +93,6 @@ software_defaults = {
     "amr": {
         "cores": min(6, usable_cores),
         "evalue": 1e-5,
-        "no_concurrent": default_no_concurrent,
         "debug": default_debug,
         "input_type": "prot",
         "valid_input_types": ["prot", "cds"],

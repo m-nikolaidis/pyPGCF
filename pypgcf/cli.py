@@ -15,7 +15,7 @@ from tqdm import tqdm
 from pypgcf import utils
 from pypgcf.amr import AMR_analyzer
 from pypgcf.cazy import CAZY_analyzer
-from pypgcf.config import software_defaults, DB_BASE_DIR
+from pypgcf.config import software_defaults, DB_BASE_DIR, default_num_concurrent
 from pypgcf.core import Core_identifier
 from pypgcf.databases import (
     AMR_installer,
@@ -199,9 +199,10 @@ def add_orthologues_subparser(subparsers):
         default=software_defaults["orthologues"]["dmnd_sensitivity"],
     )
     orthologues_blast.add_argument(
-        "--no_concurrent",
-        help="Do not run multiple searches in parallel",
-        action="store_true",
+        "--num_concurrent",
+        help="Number of concurrent search jobs",
+        type=int,
+        default=default_num_concurrent(software_defaults["orthologues"]["cores"]),
     )
     orthologues_blast.add_argument(
         "--no_filter_orthologues", help="Do not filter orthologues", action="store_true"
@@ -396,9 +397,10 @@ def add_smbgc_subparser(subparsers):
         type=int,
     )
     smbgc.add_argument(
-        "--no_concurrent",
-        help="Do not run multiple searches in parallel",
-        action="store_true",
+        "--num_concurrent",
+        help="Number of concurrent search jobs",
+        type=int,
+        default=default_num_concurrent(software_defaults["smbgc"]["cores"]),
     )
     smbgc.add_argument("--debug", help="Print debug information", action="store_true")
 
@@ -493,9 +495,10 @@ def add_virulence_subparser(subparsers):
         default=software_defaults["virulence"]["dmnd_sensitivity"],
     )
     virulence.add_argument(
-        "--no_concurrent",
-        help="Do not run parallel search jobs",
-        action="store_true",
+        "--num_concurrent",
+        help="Number of concurrent search jobs",
+        type=int,
+        default=default_num_concurrent(software_defaults["virulence"]["blast_cores"]),
     )
 
     virulence.add_argument(
@@ -533,6 +536,12 @@ def add_cazy_subparser(subparsers):
         help="E-value cut-off",
         default=software_defaults["cazy"]["evalue"],
     )
+    cazy.add_argument(
+        "--num_concurrent",
+        help="Number of concurrent search jobs",
+        type=int,
+        default=default_num_concurrent(software_defaults["cazy"]["cores"]),
+    )
 
     cazy.add_argument("--debug", help="Print debug information", action="store_true")
 
@@ -563,9 +572,10 @@ def add_amr_subparser(subparsers):
         type=int,
     )
     amr.add_argument(
-        "--no_concurrent",
-        help="Do not run parallel search jobs",
-        action="store_true",
+        "--num_concurrent",
+        help="Number of concurrent search jobs",
+        type=int,
+        default=default_num_concurrent(software_defaults["amr"]["cores"]),
     )
     amr.add_argument("--debug", help="Print debug information", action="store_true")
 
@@ -656,9 +666,6 @@ def run_orthologues(args):
     evalue = float(args["evalue"])
     dmnd_sensitivity = args["dmnd_sensitivity"]
     no_filter_orthologues = args["no_filter_orthologues"]
-    concurrent = True
-    if args["no_concurrent"]:
-        concurrent = False
     orthologues_options = dict(
         fasta_files_list=fasta_files,
         out_dir=out_dir,
@@ -667,7 +674,7 @@ def run_orthologues(args):
         input_type=input_type,
         available_cores=software_defaults["system"]["usable_cores"],
         blast_cores=cores,
-        concurrent=concurrent,
+        num_concurrent=args["num_concurrent"],
         evalue=evalue,
         dmnd_sensitivity=dmnd_sensitivity,
         no_filter=no_filter_orthologues,
@@ -807,9 +814,6 @@ def run_smbgc(args):
         database_dir = Path(database_dir) / "smBGC"
     # antismash gets the default database if nothing is supplied
 
-    concurrent = True
-    if args["no_concurrent"]:
-        concurrent = False
 
     fasta_files = args["fasta_files"]
 
@@ -822,7 +826,7 @@ def run_smbgc(args):
         database_dir=database_dir,
         cores=cores,
         available_cores=software_defaults["system"]["usable_cores"],
-        concurrent=concurrent,
+        num_concurrent=args["num_concurrent"],
         debug=debug,
     )
     local_runner.analyze_genomes()
@@ -843,9 +847,6 @@ def run_virulence(args):
     else:
         database_dir = Path(args["db"])
     database_dir = database_dir / "Virulence"
-    concurrent = True
-    if args["no_concurrent"]:
-        concurrent = False
     fasta_files = args["fasta_files"]
     vf_analyzer = VF_analyzer(
         fasta_files_list=fasta_files,
@@ -856,7 +857,7 @@ def run_virulence(args):
         blast_cores=cores,
         evalue=evalue,
         dmnd_sensitivity=dmnd_sensitivity,
-        concurrent=concurrent,
+        num_concurrent=args["num_concurrent"],
         debug=debug,
     )
     vf_analyzer.execute_homology_search()
@@ -873,9 +874,6 @@ def run_cazy(args):
     else:
         database_dir = Path(args["db"])
     database_dir = database_dir / "CAZY"
-    concurrent = True
-    if args["no_concurrent"]:
-        concurrent = False
     debug = args["debug"]
     fasta_files = args["fasta_files"]
 
@@ -886,7 +884,7 @@ def run_cazy(args):
         input_type=input_type,
         available_cores=software_defaults["system"]["usable_cores"],
         cores=cores,
-        concurrent=concurrent,
+        num_concurrent=args["num_concurrent"],
         evalue=evalue,
         debug=debug,
     )
@@ -901,9 +899,6 @@ def run_amr(args):
         database_dir = Path(DB_BASE_DIR) / "AMR"
     else:
         database_dir = Path(args["db"]) / "AMR"
-    concurrent = True
-    if args["no_concurrent"]:
-        concurrent = False
     debug = args["debug"]
     fasta_files = args["fasta_files"]
     amr_analyzer = AMR_analyzer(
@@ -913,7 +908,7 @@ def run_amr(args):
         input_type=input_type,
         available_cores=software_defaults["system"]["usable_cores"],
         cores=cores,
-        concurrent=concurrent,
+        num_concurrent=args["num_concurrent"],
         debug=debug,
     )
     amr_analyzer.search_amr()
@@ -997,6 +992,7 @@ def run_databases(args):
         databases_to_install = db_value.split(",")
 
     for database in databases_to_install:
+        print(f"Installing: {database}")
         if database == "smbgc":
             smbgc = SMBGC_installer(database_dir=database_dir, debug=debug)
             smbgc.install_database()

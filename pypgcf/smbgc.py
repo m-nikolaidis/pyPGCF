@@ -9,7 +9,6 @@ from pypgcf.utils import (
     check_if_file_exists,
     execute_command,
     multiprocess_dispatch,
-    calc_avail_dispatchers,
 )
 
 
@@ -24,7 +23,7 @@ class smBGCLocalRunner:
         database_dir: Union[Path, None],
         cores: int,
         available_cores: int,
-        concurrent: bool,
+        num_concurrent: int,
         debug: bool,
     ):
         self.antismash_raw_results_dir = out_dir / "smBGC" / "antismash_raw_results"
@@ -35,14 +34,7 @@ class smBGCLocalRunner:
         self.debug = debug
         self.genome_files = genome_fasta_files
 
-        if concurrent:
-            self.concurrent_jobs = calc_avail_dispatchers(
-                available_cores, cores, avoid_throttle=True
-            )
-        else:
-            self.concurrent_jobs = 0
-        if self.concurrent_jobs == 0:
-            self.concurrent_jobs = 1
+        self.concurrent_jobs = max(1, num_concurrent)
 
     def create_antismash_cmd(self, genome_fasta_file: Path, genome_out_dir: Path):
         cmd = " ".join(

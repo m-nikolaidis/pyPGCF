@@ -4,7 +4,6 @@ from typing import Union
 from pandas import DataFrame, read_csv, concat
 
 from pypgcf.utils import (
-    calc_avail_dispatchers,
     multiprocess_dispatch,
 )
 
@@ -19,7 +18,7 @@ class AMR_analyzer:
         input_type: bool,
         available_cores: int,
         blast_cores: int,
-        concurrent: bool,
+        num_concurrent: int,
         debug: bool,
     ):
         if input_type != "prot":  # either prot or nucl
@@ -30,18 +29,11 @@ class AMR_analyzer:
         self.fasta_files = fasta_files_list
         self.debug = debug
         self.blast_cores = blast_cores
-        if concurrent:
-            self.concurrent_jobs = calc_avail_dispatchers(
-                available_cores, blast_cores, avoid_throttle=True
-            )
-        else:
-            self.concurrent_jobs = 0
-        if self.concurrent_jobs == 0:
-            self.concurrent_jobs = 1
+        self.concurrent_jobs = max(1, num_concurrent)
         if database_dir is None:
             self.database_dir = None
         else:
-            self.database_dir = database_dir / "AMR"
+            self.database_dir = database_dir
 
     def search_amr(self) -> None:
         cmds = []

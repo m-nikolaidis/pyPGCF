@@ -10,7 +10,6 @@ from tqdm import tqdm
 from pypgcf.utils import (
     execute_command,
     multiprocess_dispatch,
-    calc_avail_dispatchers,
     recursive_unlink,
 )
 
@@ -26,7 +25,7 @@ class Orthologues_identifier:
         input_type: str,
         available_cores: int,
         blast_cores: int,
-        concurrent: bool,
+        num_concurrent: int,
         evalue: float,
         dmnd_sensitivity: str,
         no_filter: bool,
@@ -44,14 +43,7 @@ class Orthologues_identifier:
         self.debug = debug
         self.blast_db_dir = out_dir / "Blast_DB"
 
-        if concurrent:
-            self.concurrent_jobs = calc_avail_dispatchers(
-                available_cores, blast_cores, avoid_throttle=True
-            )
-        else:
-            self.concurrent_jobs = 0
-        if self.concurrent_jobs == 0:
-            self.concurrent_jobs = 1
+        self.concurrent_jobs = max(1, num_concurrent)
 
     def _create_directories(self, ref: str) -> None:
         directories = [

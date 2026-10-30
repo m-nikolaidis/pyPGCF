@@ -5,7 +5,6 @@ from tqdm import tqdm
 import logging
 
 from pypgcf.utils import (
-    calc_avail_dispatchers,
     multiprocess_dispatch,
     create_temporary_file,
     translate_fasta_records,
@@ -24,7 +23,7 @@ class CAZY_analyzer:
         input_type: str,
         available_cores: int,
         cores: int,
-        concurrent: bool,
+        num_concurrent: int,
         evalue: float,
         debug: bool = False,
     ):
@@ -36,14 +35,7 @@ class CAZY_analyzer:
         self.search_res_dir = out_dir / "CAZY" / "CAZY_search"
         self.fasta_files = fasta_files_list
         self.debug = debug
-        if concurrent:
-            self.concurrent_jobs = calc_avail_dispatchers(
-                available_cores, cores, avoid_throttle=True
-            )
-        else:
-            self.concurrent_jobs = 0
-        if self.concurrent_jobs == 0:
-            self.concurrent_jobs = 1
+        self.concurrent_jobs = max(1, num_concurrent)
         if input_type != "prot":  # either prot or CDS
             self.protein = False
         else:

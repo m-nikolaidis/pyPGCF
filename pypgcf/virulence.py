@@ -4,7 +4,6 @@ import pandas as pd
 from tqdm import tqdm
 
 from pypgcf.utils import (
-    calc_avail_dispatchers,
     create_blastn_cmd,
     create_diamond_blastp_cmd,
     keep_best_homology_hit,
@@ -24,7 +23,7 @@ class VF_analyzer:
         blast_cores: int,
         evalue: float,
         dmnd_sensitivity: str,
-        concurrent: bool,
+        num_concurrent: int,
         debug: bool,
     ):
         self.cores = blast_cores
@@ -53,14 +52,7 @@ class VF_analyzer:
         self.fasta_files = fasta_files_list
         self.debug = debug
 
-        if concurrent:
-            self.concurrent_jobs = calc_avail_dispatchers(
-                available_cores, blast_cores, avoid_throttle=True
-            )
-        else:
-            self.concurrent_jobs = 0
-        if self.concurrent_jobs == 0:
-            self.concurrent_jobs = 1
+        self.concurrent_jobs = max(1, num_concurrent)
 
         # TODO: If the input CDS the input should be first translated and then run diamond
 
