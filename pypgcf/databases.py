@@ -117,7 +117,7 @@ class VF_installer:
                     fin=dbfout, fout=fout, input_type="nucl", debug=self.debug
                 )
 
-            res = execute_command(cmd, debug=True) if self.debug else execute_command(cmd)
+            res = execute_command(cmd, debug=self.debug)
             if res != 0:
                 logging.error(
                     "Something went wrong during the build process of VF database"
@@ -153,10 +153,10 @@ class SMBGC_installer:
 
     def install_database(self) -> None:
         logging.debug("Downloading databases of antiSMASH")
-        cmd = "download-antismash-databases"
+        cmd = ["download-antismash-databases"]
         if self.database_dir is not None:
-            cmd += f" --database-dir {self.database_dir}"
-        ret = execute_command(cmd, debug=True) if self.debug else execute_command(cmd)
+            cmd += ["--database-dir", str(self.database_dir)]
+        ret = execute_command(cmd, debug=self.debug)
         if self.debug:
             if ret == 0:
                 logging.debug("Installed antiSMASH database successfully")
@@ -179,10 +179,10 @@ class EGGNOG_installer:
         self.database_dir.mkdir(exist_ok=True, parents=True)
 
     def install_database(self) -> None:
-        cmd = f"download_eggnog_data.py --data_dir {self.database_dir} -y"
+        cmd = ["download_eggnog_data.py", "--data_dir", str(self.database_dir), "-y"]
         if not self.debug:
-            cmd += " -q"
-        ret = execute_command(cmd, debug=True) if self.debug else execute_command(cmd)
+            cmd.append("-q")
+        ret = execute_command(cmd, debug=self.debug)
         if self.debug:
             if ret == 0:
                 logging.debug("Installed eggNOG database successfully")
