@@ -20,12 +20,13 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 ### 1. Remove the duplicate orchestrator — DONE (pending commit)
 - Deleted `pypgcf/pipeline.py`. `workflow.py` is the only orchestrator. The test suite passes without it.
 
-### 2. Declare the real dependencies — NOT STARTED
-- Add `dependencies` to `pyproject.toml` for the Python packages.
-- Keep `recipe.yaml` and `pixi.toml` consistent with that list.
-- Non-PyPI tools (IQ-TREE, MUSCLE, FastANI, MCL, DIAMOND, BLAST, FastTree) stay as conda dependencies, documented in the README.
-- Single source of truth for the version.
-- Done when: in a fresh venv, `pip install .` then `python -c "import pypgcf.cli"` succeeds.
+### 2. Declare the real dependencies — DONE (pending push)
+- `pyproject.toml` lists the Python runtime dependencies (pandas, openpyxl, tqdm, biopython, requests, scipy) and `requires-python = ">=3.11,<3.13"`.
+- `pixi.toml` and `recipe.yaml` match that list, and also declare BLAST, DIAMOND and FastTree, which were missing.
+- Version is set once in `pyproject.toml` (2.0.1). `pypgcf.__version__` reads it from package metadata. `recipe.yaml` had 2.0.1.2 and is now 2.0.1.
+- `tests/test_packaging.py` fails if the version, Python range or runtime dependencies drift between the three files.
+- Verified: a clean export of HEAD installs with `pip install .` on Python 3.11 and 3.12 and `import pypgcf.cli` works. The full suite passes.
+- Still open: `pixi.lock` needs regenerating with `pixi lock` (pixi was not available here).
 
 ### 3. Triage and fix the failing tests — DONE (pending commit)
 - `pytest` runs from the repo root with no `PYTHONPATH` (`pythonpath = ["tests"]` in `pyproject.toml`).
