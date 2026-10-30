@@ -53,7 +53,7 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 - `config.MODULE_TOOLS` lists the binaries per module and `config.TOOL_PACKAGES` the conda package for each. `utils.check_tools` reports every missing binary with the `mamba install` command.
 - `pyPGCF <module>` checks its tools before any work starts. A workflow checks the tools for all selected tasks before gathering input.
 - Bugs fixed on the way: CDS orthologues built `blastn makedb` and `blastn blastp` commands (wrong input-type checks), and orthologues `--input_type` accepted any string, so `CDS` silently ran DIAMOND on nucleotides.
-- Still on shell strings: species demarcation (MCL pipeline with redirection), eggNOG, smBGC, AMR, CAZy, virulence, download and database installers. They work unchanged; migrate them when those modules are next touched.
+- Follow-up: every module now builds argument lists except the CAZy search and installer, which wait on the dbCAN decision below. Real bugs found while checking each command against the installed tool: CDS virulence searches had a broken output format; downloads by species name split the name; `amrfinder_update` was given an option it rejects; antiSMASH relied on `--cpu` abbreviating `--cpus`; DIAMOND sensitivity names differed between orthologues and virulence.
 
 ### 5. Split the dependency suite into core and full environments — DONE
 - pixi environments: `default` (core: FastANI, MCL, BLAST, DIAMOND, MUSCLE, IQ-TREE, NCBI datasets), `full` (adds eggNOG-mapper, antiSMASH, dbCAN, AMRFinderPlus) and `test` (core plus pytest). One solve group.
@@ -89,8 +89,23 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 - Week 2: items 4, 5, 6.
 - Week 3: items 7, 8.
 
+## End-to-end check
+
+`pyPGCF workflow` (orthologues, core, fingerprints, entire-set tree) and the core modules were run on the two genomes in `test_data/dataset.zip`, plus a renamed copy for the tree, in the pixi core environment. This found and fixed:
+- `pyPGCF workflow` crashed on its first step; the fixes were in the deleted `pipeline.py` and are now ported to `workflow.py`.
+- The Gblocks filter used fixed thresholds for about 16 genomes, so smaller sets got an empty alignment.
+- IQ-TREE and MUSCLE failures were ignored, so the empty alignment ended with exit code 0.
+- Machines with two or fewer CPUs got 0 or negative default core counts.
+- `pyPGCF databases --install all` installed only the first database.
+- Workflow parameter validation never rejected invalid values.
+
 ## Open questions
 
 1. Bioconda recipe: one full package (all modules), or separate core and full packages?
 2. Bioconda submission needs a tagged GitHub release (for example v2.0.1) to point the recipe at. Create one?
 3. Code style: apply black to the whole codebase? It touches 18 files, so it cannot be split into commits under 100 lines; one mechanical commit per file is possible.
+4. CAZy is broken with the declared dbCAN (>=5.2.8): dbCAN 5 replaced `run_dbcan <file> protein ...` with subcommands (`run_dbcan CAZyme_annotation ...`) and removed `dbcan_build`. Port the module to dbCAN 5 (needs a real run to confirm its output format), or pin dbCAN 4?
+5. CDS orthologues use blastn's default `megablast` task. Between the two test genomes it finds 706 of 2,441 reference CDS; `dc-megablast` finds 1,920 and `blastn` 1,976 (DIAMOND on proteins: 1,953 orthologues). Switch to `dc-megablast` or `blastn`? This changes results, so it is your call.
+6. The deleted `pipeline.py` also removed `Calculate_EGGNOG_on_core/fingerprints` from `TASK_MAP`. Was that intended?
+7. `--method NJ` is offered for phylogenomic but raises NotImplementedError. Implement it (IQ-TREE can output a BIONJ tree) or remove the choice?
+8. `pyPGCF download --debug` adds `--preview`, so nothing is downloaded and the following steps fail. Should debug mean dry run?
