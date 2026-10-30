@@ -20,7 +20,7 @@ class TestVFAnalyzer(unittest.TestCase):
         self.concurrent = True
         self.debug = False
 
-    @patch("context.virulence.calc_avail_dispatchers", return_value=2)
+    @patch("pypgcf.virulence.calc_avail_dispatchers", return_value=2)
     def test_init(self, mock_calc_avail_dispatchers):
         analyzer = virulence.VF_analyzer(
             fasta_files_list=self.fasta_files_list,
@@ -70,8 +70,8 @@ class TestVFAnalyzer(unittest.TestCase):
         )
 
     # @pytest.mark.skip(reason="Not implemented")
-    @patch("context.virulence.create_diamond_blastp_cmd", return_value="blastp_cmd")
-    @patch("context.virulence.multiprocess_dispatch", return_value=None)
+    @patch("pypgcf.virulence.create_diamond_blastp_cmd", return_value="blastp_cmd")
+    @patch("pypgcf.virulence.multiprocess_dispatch", return_value=None)
     @patch("pathlib.Path.mkdir")
     def test_execute_homology_search(
         self, mock_mkdir, mock_multiprocess_dispatch, mock_create_diamond_blastp_cmd
@@ -89,7 +89,7 @@ class TestVFAnalyzer(unittest.TestCase):
             debug=self.debug,
         )
         analyzer.execute_homology_search()
-        mock_mkdir.assert_called_once_with(exist_ok=True)
+        mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
         mock_create_diamond_blastp_cmd.assert_called()
         mock_multiprocess_dispatch.assert_called_once()
 
@@ -100,7 +100,7 @@ class TestVFAnalyzer(unittest.TestCase):
         new_callable=mock_open,
         read_data="VF1\tCategory1\tOrigin1\tDescription1\n",
     )
-    @patch("context.virulence.keep_best_homology_hit", return_value=pd.DataFrame())
+    @patch("pypgcf.virulence.keep_best_homology_hit", return_value=pd.DataFrame())
     @patch(
         "context.virulence.virulence.VF_analyzer._read_vf_desc_filt",
         return_value={
@@ -109,7 +109,7 @@ class TestVFAnalyzer(unittest.TestCase):
     )
     @pytest.mark.skip(reason="Not implemented")
     @patch("pandas.DataFrame.to_excel")
-    @patch("context.virulence.Path.glob")
+    @patch("pypgcf.virulence.Path.glob")
     def test_parse_results(
         self,
         mock_glob,
