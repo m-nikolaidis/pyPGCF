@@ -15,7 +15,7 @@ class TestPackagingConsistency(unittest.TestCase):
     def setUpClass(cls):
         cls.pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text())
         cls.pixi = tomllib.loads((ROOT / "pixi.toml").read_text())
-        cls.recipe = (ROOT / "recipe.yaml").read_text()
+        cls.recipe = (ROOT / "recipe" / "recipe.yaml").read_text()
 
     def test_pixi_version_matches_pyproject(self):
         self.assertEqual(
