@@ -171,9 +171,9 @@ class Phylogenomic:
         else:
             self.tree_model = iqtree_model
 
-            self.concurrent_jobs = calc_avail_dispatchers(
-                available_cores, cores, avoid_throttle=True
-            )
+        self.concurrent_jobs = calc_avail_dispatchers(
+            available_cores, cores, avoid_throttle=True
+        )
         if self.concurrent_jobs == 0:
             self.concurrent_jobs = 1
 
