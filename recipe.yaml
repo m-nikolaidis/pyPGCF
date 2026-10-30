@@ -6,7 +6,9 @@ source:
   path: .
 
 build:
-  script: 
+  number: 0
+  noarch: python
+  script:
     - $PYTHON -m pip install --no-deps --no-build-isolation .
 
 requirements:
@@ -36,16 +38,17 @@ requirements:
     - scipy>=1.11,<2
 
 tests:
-  - requirements:
-      run:
-        - pytest >=7.0
-        - pytest-cov >=4.0
-        - pytest-mock >=3.0
-        - black >=22.0
-        - flake8 >=5.0
-        - mypy >=1.0
-    script:
+  - script:
       - python -c "import pypgcf"
       - python -c "from pypgcf._vendor.pygblocks import Options, compute_mask, trim_sequence"
       - python -c "from pypgcf.cli import main"
       - pyPGCF -h
+      - pyPGCF core --help
+      - python -m pypgcf -h
+
+about:
+  homepage: https://github.com/m-nikolaidis/pyPGCF
+  repository: https://github.com/m-nikolaidis/pyPGCF
+  license: GPL-3.0-or-later
+  license_file: LICENSE
+  summary: Phylogenomics, species demarcation, and core and fingerprint proteins of bacterial genomes
