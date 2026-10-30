@@ -12,8 +12,8 @@ class TestCAZYAnalyzer(unittest.TestCase):
         self.database_dir = Path("/tmp/database")
         self.results_dir = Path("/tmp/results")
         self.fasta_files = [Path("/tmp/f1.fa"), Path("/tmp/f2.fa")]
-        self.protein = True
-        self.verbose = False
+        self.input_type = "prot"
+        self.debug = False
         self.available_cores = 6
         self.concurrent = True
         self.cazy_analyzer = cazy.CAZY_analyzer(
@@ -22,17 +22,17 @@ class TestCAZYAnalyzer(unittest.TestCase):
             database_dir=self.database_dir,
             out_dir=self.results_dir,
             fasta_files_list=self.fasta_files,
-            input_type=self.protein,
-            verbose=self.verbose,
+            input_type=self.input_type,
+            debug=self.debug,
             concurrent=self.concurrent,
             available_cores=self.available_cores,
         )
 
-    # @patch("context.cazy.calc_avail_dispatchers", return_value=2)
-    # @patch("context.cazy.multiprocess_dispatch")
-    # @patch("context.cazy.create_temporary_file", return_value=Path("/fake/temp/file"))
-    # @patch("context.cazy.translate_fasta_records", return_value=["record1", "record2"])
-    # @patch("context.cazy.seqrecords_to_fasta")
+    # @patch("pypgcf.cazy.calc_avail_dispatchers", return_value=2)
+    # @patch("pypgcf.cazy.multiprocess_dispatch")
+    # @patch("pypgcf.cazy.create_temporary_file", return_value=Path("/fake/temp/file"))
+    # @patch("pypgcf.cazy.translate_fasta_records", return_value=["record1", "record2"])
+    # @patch("pypgcf.cazy.seqrecords_to_fasta")
     # def test_execute_cazy_search_valid(
     #     self,
     #     mock_seqrecords_to_fasta,
@@ -49,11 +49,11 @@ class TestCAZYAnalyzer(unittest.TestCase):
     #     self.cazy_analyzer.execute_cazy_search()
     #     mock_multiprocess_dispatch.assert_called_once()
 
-    # @patch("context.cazy.calc_avail_dispatchers", return_value=2)
-    # @patch("context.cazy.multiprocess_dispatch")
-    # @patch("context.cazy.create_temporary_file", return_value=Path("/fake/temp/file"))
-    # @patch("context.cazy.translate_fasta_records", return_value=["record1", "record2"])
-    # @patch("context.cazy.seqrecords_to_fasta")
+    # @patch("pypgcf.cazy.calc_avail_dispatchers", return_value=2)
+    # @patch("pypgcf.cazy.multiprocess_dispatch")
+    # @patch("pypgcf.cazy.create_temporary_file", return_value=Path("/fake/temp/file"))
+    # @patch("pypgcf.cazy.translate_fasta_records", return_value=["record1", "record2"])
+    # @patch("pypgcf.cazy.seqrecords_to_fasta")
     # def test_execute_cazy_search_invalid(
     #     self,
     #     mock_seqrecords_to_fasta,
@@ -87,8 +87,7 @@ class TestCAZYAnalyzer(unittest.TestCase):
 
     def test_clean_dmnd_dbcansub_output_valid_diff_families(self):
         input_str = "GH5_1+GT10"
-        expected_output = "GT;GH"
-        # expected_output = "GH;GT"
+        expected_output = "GH;GT"
         result = self.cazy_analyzer._clean_dmnd_dbcansub_output(input_str)
         self.assertEqual(result, expected_output)
 
@@ -146,7 +145,7 @@ class TestCAZYAnalyzer(unittest.TestCase):
 
 
 #
-#     @patch("context.cazy.dict_to_dataframe")
+#     @patch("pypgcf.cazy.dict_to_dataframe")
 #     @patch("pandas.DataFrame.to_excel")
 #     @patch(
 #         "builtins.open",
