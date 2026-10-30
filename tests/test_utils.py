@@ -187,19 +187,30 @@ class TestUtilityModule(unittest.TestCase):
 
     def test_create_blastdb_cmd(self):
         self.assertEqual(
-            utils.create_blastdb_cmd(Path("input.fasta"), "nucl"),
+            utils.create_blastdb_cmd(
+                Path("input.fasta"), Path("input.fasta"), "nucl", debug=False
+            ),
             "makeblastdb -dbtype nucl -in input.fasta -out input.fasta > /dev/null",
         )
         self.assertEqual(
-            utils.create_blastdb_cmd(Path("input.fasta"), "prot"),
+            utils.create_blastdb_cmd(
+                Path("input.fasta"), Path("input.fasta"), "prot", debug=False
+            ),
             "makeblastdb -dbtype prot -in input.fasta -out input.fasta > /dev/null",
         )
-        self.assertEqual(utils.create_blastdb_cmd(Path("input.fasta"), "invalid"), "")
+        self.assertEqual(
+            utils.create_blastdb_cmd(
+                Path("input.fasta"), Path("input.fasta"), "invalid", debug=False
+            ),
+            "",
+        )
 
     def test_create_diamonddb_cmd(self):
         self.assertEqual(
-            utils.create_diamonddb_cmd(Path("input.fasta")),
-            "diamond makedb --in input.fasta --db input.fasta > /dev/null",
+            utils.createdmnddb_cmd(
+                fin=Path("input.fasta"), fout=Path("input.fasta"), debug=True
+            ),
+            "diamond makedb --db input.fasta --in input.fasta --threads 4",
         )
 
     @patch("pathlib.Path.exists")
@@ -220,7 +231,7 @@ class TestUtilityModule(unittest.TestCase):
 
     @patch("zipfile.ZipFile")
     @patch("gzip.GzipFile")
-    @patch("context.utils.check_if_file_exists")
+    @patch("pypgcf.utils.check_if_file_exists")
     def test_unzip_file(self, mock_check_exists, mock_gzipfile, mock_zipfile):
         mock_check_exists.return_value = True
 
