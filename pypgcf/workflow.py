@@ -62,7 +62,7 @@ class WorkflowRunner:
         self.param_file = param_file
         self.debug = debug
         self.params: Dict[str, Any] = {}
-        self.tasks: Dict[str, bool] = {}
+        self.tasks_to_execute: Dict[str, bool] = {}
         self.cds_or_protein_fasta_files = []
         self.genomic_fasta_files = []
 
@@ -247,9 +247,16 @@ class WorkflowRunner:
         mask = (self.input_genomes_or_proteomes_list_df["Group_Ref"] == 1) | (
             self.input_genomes_or_proteomes_list_df["WholeSet_Ref"] == 1
         )
-        self.orthologues_ref_list = self.input_genomes_or_proteomes_list_df.loc[
-            mask
-        ].index.tolist()
+        genome_list = self.input_genomes_or_proteomes_list_df.loc[mask].index.tolist()
+
+        tmpfile = create_temporary_file()
+
+        with open(tmpfile, "w") as wf:
+            for genome in genome_list:
+                wf.write(genome + "\n")
+
+        self.orthologues_ref_list_file = tmpfile
+        self.orthologues_ref_list = genome_list
 
         return None
 
@@ -261,16 +268,25 @@ class WorkflowRunner:
 
         wholeset_ref_file = None
         for ref in self.orthologues_ref_list:
-            og_matrix_f = self.out_dir / "Orthologues" / ref / "OGMatrix.csv"
+            og_matrix_f = self.out_dir / "Orthologues" / ref / "OGmatrix.csv"
             ref_list.append(og_matrix_f)
             if ref == wholeset_ref:
                 wholeset_ref_file = og_matrix_f
 
         if wholeset_ref_file is None:
-            raise ValueError("OGMatrix based on WholeSet reference wasn't found")
+            raise ValueError("OGmatrix based on WholeSet reference wasn't found")
 
         self.core_ref_list = ref_list
+        self.core_ref_list_file = create_temporary_file()
+        with open(self.core_ref_list_file, "w") as wf:
+            for item in ref_list:
+                wf.write(str(item) + "\n")
+
         self.core_whole_set_ref_list = [wholeset_ref_file]
+        self.core_whole_set_ref_list_file = create_temporary_file()
+        with open(self.core_whole_set_ref_list_file, "w") as wf:
+            wf.write(str(wholeset_ref_file) + "\n")
+
         return None
 
     def write_species_file_for_core(self) -> None:
@@ -306,5 +322,9 @@ class WorkflowRunner:
                 ref_list_core.append(species_core)
 
         self.emapper_core_protein_files_reflist = ref_list_core
+        self.emapper_core_protein_files_reflist_file = create_temporary_file()
+        with open(self.emapper_core_protein_files_reflist_file, "w") as wf:
+            for item in ref_list_core:
+                wf.write(str(item) + "\n")
 
         return None
