@@ -152,6 +152,7 @@ class Phylogenomic:
         tree_method: str,
         iqtree_model: Union[str, None],
         input_type: str,
+        fast: bool = False,
         debug: bool = False,
     ):
         self.orthology_matrix_in = orthology_matrix_in
@@ -162,6 +163,7 @@ class Phylogenomic:
         self.cores = cores
         self.no_keep_fasta = no_keep_fasta
         self.debug = debug
+        self.fast = fast
         self.tree_method = tree_method
         self.input_type = input_type
         self.fasta_files = fasta_files_list
@@ -389,6 +391,8 @@ class Phylogenomic:
         cmd = "iqtree -m {} -merit AIC --alrt 1000 -T {} -s {}".format(
             self.tree_model, self.cores, superalignment_file
         )
+        if self.fast:
+            cmd += " --fast"
         if not self.debug:
             cmd += " --quiet"
         _ = execute_command(cmd, debug=self.debug)
