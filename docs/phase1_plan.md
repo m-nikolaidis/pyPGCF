@@ -55,11 +55,13 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 - Bugs fixed on the way: CDS orthologues built `blastn makedb` and `blastn blastp` commands (wrong input-type checks), and orthologues `--input_type` accepted any string, so `CDS` silently ran DIAMOND on nucleotides.
 - Still on shell strings: species demarcation (MCL pipeline with redirection), eggNOG, smBGC, AMR, CAZy, virulence, download and database installers. They work unchanged; migrate them when those modules are next touched.
 
-### 5. Split the dependency suite into core and full environments — NOT STARTED
-- Core: FastANI, BLAST/DIAMOND, MCL, MUSCLE, IQ-TREE (species demarcation, orthologues, core, phylogenomic).
-- Full: adds eggNOG-mapper, antiSMASH, dbCAN, AMRFinderPlus, ncbi-datasets.
-- In pixi, express full as a `full` feature.
-- Done when: the core environment solves and runs the core test set.
+### 5. Split the dependency suite into core and full environments — DONE
+- pixi environments: `default` (core: FastANI, MCL, BLAST, DIAMOND, MUSCLE, IQ-TREE, NCBI datasets), `full` (adds eggNOG-mapper, antiSMASH, dbCAN, AMRFinderPlus) and `test` (core plus pytest). One solve group.
+- The NCBI datasets CLI is in core rather than full: it is one small binary and downloading genomes is the first pipeline step.
+- `pixi.lock` is generated with pixi 0.62.2 to keep lock format v6; pixi 0.82 upgrades it to v7.
+- Verified: the core environment installs and runs the suite with the real tools, locally and in CI.
+- Found on the way: `pixi run pyPGCF` never ran the CLI (no `__main__` guard). `python -m pypgcf` now works and the task uses it.
+- The conda recipe is still one full package (see open questions).
 
 ### 6. Explicit database paths — DONE
 - `config.database_dir(module, cli_value)` is the only place a database path is resolved: the CLI option, then `PYPGCF_DB_DIR`, then the earlier default. It logs the result (visible with `--debug`).
@@ -68,17 +70,27 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 - Bugs fixed on the way: CAZy and AMR read from `CAZY/CAZY` and `AMR/AMR` while installers wrote `CAZY` and `AMR`; `pyPGCF databases` without `--database_dir` crashed; `pyPGCF amr`, `pyPGCF eggnog` (after the mapper step) and `pyPGCF cazy` crashed with wrong constructor arguments or missing options; `pyPGCF amr` without `-out` crashed instead of printing usage.
 - `tests/test_cli_signatures.py` binds every run function's constructor calls against the real signatures, so this class of crash fails the tests.
 
-### 7. CI — NOT STARTED
-- GitHub Actions: lint (flake8, black check), unit tests on Python 3.11 and 3.12, smoke test (`pyPGCF -h`).
-- Second job: core tools via pixi, runs `external`-marked tests.
-- Done when: a PR shows green checks.
+### 7. CI — DONE
+- `.github/workflows/ci.yml` runs on every push and pull request:
+  - `tests`: Python 3.11 and 3.12, flake8 for syntax errors and undefined names, pytest, `pyPGCF -h`.
+  - `external-tools`: the pixi `test` environment, a check that it provides every core module tool, and the suite with the real tools.
+  - `package`: builds `recipe/recipe.yaml` with rattler-build (installs it into a fresh environment and runs the recipe tests) and runs `pixi build`.
+- All jobs green. Full flake8 and black checks are not enabled: the existing code has 569 flake8 findings and 18 files black would reformat (see open questions).
 
-### 8. Bioconda packaging check — NOT STARTED
-- Build the recipe locally; confirm the recipe's test commands pass.
-- Done when: the package installs into an empty conda environment and `pyPGCF core --help` works.
+### 8. Bioconda packaging check — DONE
+- Recipe moved to `recipe/recipe.yaml`. At the repository root, rattler-build copied the whole repository into the package (8.8 MB for 40 KB of code); now 49 KB.
+- Added an `about` section (GPL-3.0-or-later, homepage, summary), `noarch: python` and build number 0. Tests run `pyPGCF -h`, `pyPGCF core --help` and `python -m pypgcf -h`.
+- Verified with rattler-build locally and in CI: the package builds, installs into a fresh environment with all run dependencies, and passes its tests.
+- Not done: submitting to Bioconda needs a tagged release with a source URL and checksum (see open questions).
 
 ## Sequence
 
 - Week 1: items 1, 2, 3.
 - Week 2: items 4, 5, 6.
 - Week 3: items 7, 8.
+
+## Open questions
+
+1. Bioconda recipe: one full package (all modules), or separate core and full packages?
+2. Bioconda submission needs a tagged GitHub release (for example v2.0.1) to point the recipe at. Create one?
+3. Code style: apply black to the whole codebase? It touches 18 files, so it cannot be split into commits under 100 lines; one mechanical commit per file is possible.
