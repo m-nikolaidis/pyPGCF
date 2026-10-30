@@ -49,7 +49,14 @@ def database_dir(
 TEST_DATA_DIR = Path(__file__).parent / ".." / "test_data/"
 
 system_cores = cpu_count()
-usable_cores = system_cores - 2
+
+
+def usable_core_count(system_cores: int) -> int:
+    """Leave two cores free for the system, but always use at least one."""
+    return max(1, system_cores - 2)
+
+
+usable_cores = usable_core_count(system_cores)
 default_debug = False
 
 

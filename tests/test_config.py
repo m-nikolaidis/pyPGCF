@@ -29,5 +29,13 @@ class TestDatabaseDir(unittest.TestCase):
             )
 
 
+class TestUsableCores(unittest.TestCase):
+    def test_small_machines_still_get_one_core(self):
+        self.assertEqual(config.usable_core_count(1), 1)
+        self.assertEqual(config.usable_core_count(2), 1)
+        self.assertEqual(config.usable_core_count(3), 1)
+        self.assertEqual(config.usable_core_count(8), 6)
+
+
 if __name__ == "__main__":
     unittest.main()
