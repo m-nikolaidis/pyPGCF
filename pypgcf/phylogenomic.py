@@ -281,7 +281,7 @@ class Phylogenomic:
             if not self.debug:
                 cmd.append("-quiet")
             commands.append(cmd)
-        _ = multiprocess_dispatch(
+        return_codes = multiprocess_dispatch(
             "system",
             commands,
             self.cores,
@@ -289,6 +289,9 @@ class Phylogenomic:
             description="Aligning OG fasta files",
             debug=self.debug,
         )
+        failed = sum(1 for code in return_codes if code != 0)
+        if failed:
+            raise RuntimeError(f"MUSCLE failed for {failed} orthologous groups")
         return None
 
     def create_superalignment_file(self) -> None:
@@ -362,7 +365,8 @@ class Phylogenomic:
             cmd.append("--fast")
         if not self.debug:
             cmd.append("--quiet")
-        _ = execute_command(cmd, debug=self.debug)
+        if execute_command(cmd, debug=self.debug) != 0:
+            raise RuntimeError("IQ-TREE failed; rerun with --debug to see its output")
 
     def move_iqtree_files(self):
         files = list(self.out_dir.glob("superalignment.fa-gb.*"))

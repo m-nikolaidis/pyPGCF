@@ -288,6 +288,22 @@ class TestPhylogenomicAlignmentRouting(unittest.TestCase):
                 ],
             )
 
+    def test_protein_alignment_failure_raises(self):
+        with TemporaryDirectory() as tmp_dir:
+            og_fasta_dir = Path(tmp_dir)
+            (og_fasta_dir / "OG1.fa").touch()
+            (og_fasta_dir / "OG2.fa").touch()
+            runner = phylogenomic.Phylogenomic.__new__(phylogenomic.Phylogenomic)
+            runner.input_type = "prot"
+            runner.og_fasta_dir = og_fasta_dir
+            runner.og_fasta_dir_aln = og_fasta_dir
+            runner.cores, runner.debug = 1, False
+            failed_one = patch.object(
+                phylogenomic, "multiprocess_dispatch", return_value=[0, 1]
+            )
+            with failed_one, self.assertRaisesRegex(RuntimeError, "1 orthologous"):
+                runner.align_orthologous_groups_fasta()
+
     def test_cds_alignment_end_to_end_writes_only_projected_nucleotides(self):
         captured_temporary_paths = []
         with TemporaryDirectory() as tmp_dir:
@@ -404,6 +420,14 @@ class TestModule(unittest.TestCase):
     def test_iqtree_command_uses_fast_only_when_requested(self):
         self.assertNotIn("--fast", self._iqtree_command(fast=False))
         self.assertIn("--fast", self._iqtree_command(fast=True))
+
+    def test_iqtree_failure_raises(self):
+        phylo = phylogenomic.Phylogenomic.__new__(phylogenomic.Phylogenomic)
+        phylo.out_dir, phylo.tree_model, phylo.cores = Path("out"), "TEST", 1
+        phylo.fast, phylo.debug = False, False
+        with patch("pypgcf.phylogenomic.execute_command", return_value=2):
+            with self.assertRaises(RuntimeError):
+                phylo.compute_tree_iqtree()
 
     @unittest.skip("needs ../data (OGmatrix and proteome FASTAs), not included in the repository")
     def test_create_og_fasta(self):
