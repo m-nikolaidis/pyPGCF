@@ -123,10 +123,10 @@ class TestEggNOGRunner(unittest.TestCase):
         )
 
     @pytest.mark.skip("Long running task. Not implemented properly")
-    @patch("context.utils.multiprocess_dispatch")
-    @patch("context.eggnog.EggNOGRunner.create_eggnog_cmd")
-    @patch("context.eggnog.EggNOGRunner.setup_directories")
-    @patch("context.eggnog.EggNOGRunner.clean_unessecary_output")
+    @patch("pypgcf.utils.multiprocess_dispatch")
+    @patch("pypgcf.eggnog.EggNOGRunner.create_eggnog_cmd")
+    @patch("pypgcf.eggnog.EggNOGRunner.setup_directories")
+    @patch("pypgcf.eggnog.EggNOGRunner.clean_unessecary_output")
     def test_execute_eggnog_mapper(
         self, mock_clean_output, mock_setup_dirs, mock_create_cmd, mock_dispatch
     ):
@@ -244,7 +244,7 @@ class TestEggNOGParser(unittest.TestCase):
 
     @pytest.mark.skip(reason="Not implemented properly yet")
     @patch("pandas.read_csv")
-    @patch("context.eggnog.EggNOGParser.load_all_reference_proteins")
+    @patch("pypgcf.eggnog.EggNOGParser.load_all_reference_proteins")
     @patch("builtins.open", new_callable=mock_open, read_data=FASTA_DATA)
     @patch("Bio.SeqIO.parse")
     def test_parse_eggnog_raw_results(
@@ -320,7 +320,7 @@ class TestEggNOGParser(unittest.TestCase):
         self.assertEqual(expected_percent_df.equals(observed_percent_df), True)
         tmpexcel.unlink()
 
-    @patch("context.eggnog.read_excel")
+    @patch("pypgcf.eggnog.read_excel")
     @patch("pandas.ExcelFile")
     def test_read_core_protein_tables_wholeset(self, mock_excel, mock_read_excel):
         # Mock excel file
@@ -378,8 +378,8 @@ class TestEggNOGParser(unittest.TestCase):
         self.assertEqual(core_proteins, ["p1", "p2"])
         self.assertEqual(fingerprints, ["p1"])
 
-    @patch("context.eggnog.EggNOGParser.perform_hypergeom_test")
-    @patch("context.utils.dict_to_dataframe")
+    @patch("pypgcf.eggnog.EggNOGParser.perform_hypergeom_test")
+    @patch("pypgcf.utils.dict_to_dataframe")
     def test_compare_core_and_fingerprints_against_background(
         self, mock_dict_to_df, mock_perform_hypergeom_test
     ):
