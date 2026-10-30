@@ -33,6 +33,17 @@ The Python packages (pandas, scipy, biopython, openpyxl, tqdm, requests) are ins
 
 ### Using pixi
 
+From a clone of this repository, pixi provides two environments:
+
+| Environment | Modules | Command |
+| --- | --- | --- |
+| `default` (core) | species demarcation, orthologues, core, phylogenomic, download | `pixi run pyPGCF --help` |
+| `full` | all modules, adding eggNOG, smBGC (antiSMASH), CAZy (dbCAN) and AMR | `pixi run -e full pyPGCF --help` |
+
+`pixi run test` runs the test suite.
+
+To install a built package globally:
+
 `pixi global install --path pypgcf-<version>-<build>.conda --channel conda-forge --channel bioconda --environment pypgcf`
 
 ### From source with pip
