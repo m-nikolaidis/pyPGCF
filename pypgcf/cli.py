@@ -563,8 +563,10 @@ def add_amr_subparser(subparsers):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Used to identify AMR genes with amrfinder",
     )
-    amr.add_argument("-fasta_dir", metavar="in", help="Fasta directory")
-    amr.add_argument("-out", metavar="out", help="Output directory")
+    amr.add_argument(
+        "-fasta_dir", metavar="in", help="Fasta directory", required=True
+    )
+    amr.add_argument("-out", metavar="out", help="Output directory", required=True)
     amr.add_argument(
         "--input_type",
         help="Input type [either: prot or cds]",
