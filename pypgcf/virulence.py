@@ -47,7 +47,7 @@ class VF_analyzer:
             self.dmnd_sensitivity = dmnd_sensitivity
         else:
             self.database_file = database_dir / "VFDB_setA_nt"
-            self.outfmt = "'6 qaccver saccver qcovhsp pident evalue bitsc"
+            self.outfmt = "6 qaccver saccver qcovhsp pident evalue bitscore"
         self.results_dir = out_dir / "Virulence"
         self.fasta_files = fasta_files_list
         self.debug = debug

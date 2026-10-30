@@ -93,6 +93,29 @@ class TestVFAnalyzer(unittest.TestCase):
         mock_create_diamond_blastp_cmd.assert_called()
         mock_multiprocess_dispatch.assert_called_once()
 
+    @patch("pypgcf.virulence.multiprocess_dispatch", return_value=None)
+    @patch("pathlib.Path.mkdir")
+    def test_cds_search_passes_blast_output_format_as_one_argument(
+        self, mock_mkdir, mock_multiprocess_dispatch
+    ):
+        analyzer = virulence.VF_analyzer(
+            fasta_files_list=self.fasta_files_list,
+            database_dir=self.database_dir,
+            out_dir=self.out_dir,
+            input_type="cds",
+            available_cores=self.available_cores,
+            blast_cores=self.blast_cores,
+            evalue=self.evalue,
+            dmnd_sensitivity=self.dmnd_sensitivity,
+            concurrent=self.concurrent,
+            debug=self.debug,
+        )
+        analyzer.execute_homology_search()
+        cmd = mock_multiprocess_dispatch.call_args.args[1][0]
+        self.assertEqual(cmd[0], "blastn")
+        outfmt = cmd[cmd.index("-outfmt") + 1]
+        self.assertEqual(outfmt, "6 qaccver saccver qcovhsp pident evalue bitscore")
+
     @patch("pandas.read_csv")
     @patch("pandas.concat")
     @patch(
