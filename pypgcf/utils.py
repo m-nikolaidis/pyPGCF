@@ -104,16 +104,9 @@ def create_diamond_blastp_cmd(
     outfmt: str,
     debug: bool = False,
 ) -> str:
-    # DIAMOND case first
-    dmnd_sensitivity_values = [
-        "very-sensitive",
-        "sensitive",
-        "mid-sensitive",
-        "more-sensitive",
-        "ultra-sensitive",
-    ]
-    if dmnd_sensitivity not in dmnd_sensitivity_values:
-        return ""
+    dmnd_sensitivity = dmnd_sensitivity.replace("_", "-")
+    if dmnd_sensitivity not in config.DMND_SENSITIVITIES:
+        raise ValueError(f"Unknown DIAMOND sensitivity: {dmnd_sensitivity}")
     quiet = "" if debug else " --quiet"
     cmd = f"diamond blastp --query {fasta_file}{quiet} --db {database_f} --outfmt {outfmt} --out {out_file} --evalue {blast_evalue} --threads {blast_cores} --{dmnd_sensitivity}"
     return cmd

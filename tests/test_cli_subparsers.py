@@ -124,6 +124,18 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["dmnd_sensitivity"], "sensitive")
         self.assertEqual(args["input_type"], "prot")
 
+    def test_dmnd_sensitivity_accepts_underscores_and_rejects_unknown(self):
+        required = {
+            "orthologues": ["-in", "f", "-out", "o", "-ref", "r"],
+            "virulence": ["-fasta_dir", "f", "-out", "o"],
+        }
+        for module, base in required.items():
+            argv = [module] + base + ["--dmnd_sensitivity"]
+            args = vars(self.parser.parse_args(argv + ["more_sensitive"]))
+            self.assertEqual(args["dmnd_sensitivity"], "more-sensitive")
+            with self.assertRaises(SystemExit), patch("sys.stderr"):
+                self.parser.parse_args(argv + ["fastest"])
+
     def test_orthologues_input_type_accepts_only_prot_or_cds(self):
         base = ["orthologues", "-in", "fasta_dir", "-out", "output_dir", "-ref", "r"]
         args = vars(self.parser.parse_args(base + ["--input_type", "cds"]))
