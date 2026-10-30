@@ -975,7 +975,7 @@ def run_download(args):
 
 def run_databases(args):
     db_value = args["install"]
-    database_dir = Path(args["database_dir"])
+    database_dir = args["database_dir"]  # None means PYPGCF_DB_DIR or the default
     debug = args["debug"]
     cores = args["cores"]
     if "all" in db_value and db_value != "all":
