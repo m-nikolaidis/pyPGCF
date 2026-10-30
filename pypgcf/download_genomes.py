@@ -64,19 +64,15 @@ class GenomeDownloader:
         self.limit_to_ref = limit_to_ref
 
     def download_hydrated(self):
-        cmd = " ".join(
-            [
-                "datasets download genome taxon",
-                str(self.taxon),
-                "--include gbff",
-                f"--assembly-level {self.assembly_level}",
-                f"--assembly-source {self.assembly_source} --filename {self.out_dir}/dataset.zip",
-            ]
-        )
+        # The taxon is one argument, so species names with spaces work
+        cmd = ["datasets", "download", "genome", "taxon", str(self.taxon)]
+        cmd += ["--include", "gbff", "--assembly-level", str(self.assembly_level)]
+        cmd += ["--assembly-source", str(self.assembly_source)]
+        cmd += ["--filename", str(self.out_dir / "dataset.zip")]
         if self.limit_to_ref:
-            cmd += " --reference"
+            cmd.append("--reference")
         if self.debug:
-            cmd += " --preview"
+            cmd.append("--preview")
         if self.debug:
             res = utils.execute_command(cmd, debug=True)
         else:
