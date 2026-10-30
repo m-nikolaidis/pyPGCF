@@ -163,9 +163,8 @@ class TestEggNOGRunner(unittest.TestCase):
                 "-i /fake/fasta1.fasta",
                 "--data_dir /fake/db",
                 "--itype CDS --translate",
-                "> /dev/null",
             ]
-        )
+        ).split()
 
         self.assertEqual(self.runner.eggnog_cmds[0], expected_cmd)
 
@@ -187,9 +186,8 @@ class TestEggNOGRunner(unittest.TestCase):
                 "-o /fake/out_dir/eggNOG/eggnog_mapper/fasta1_eggNOG_results.csv",
                 "-i /fake/fasta1.fasta",
                 "--data_dir /fake/db",
-                "> /dev/null",
             ]
-        )
+        ).split()
 
         self.assertEqual(self.runner.eggnog_cmds[0], expected_cmd)
 

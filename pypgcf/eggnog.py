@@ -102,20 +102,12 @@ class EggNOGRunner:
         cmds = []
         for fasta_file in self.fasta_files:
             fout = self.emapper_resdir / (fasta_file.stem + "_eggNOG_results.csv")
-            eggnog_cmd = " ".join([
-                "emapper.py",
-                f"--cpu {self.cores}",
-                f"--pident {self.pident}",
-                f"--query_cov {self.qcov}",
-                f"--subject_cov {self.scov}",
-                f"-o {fout}",
-                f"-i {fasta_file}",
-                f"--data_dir {self.database_dir}",
-            ])
+            eggnog_cmd = ["emapper.py", "--cpu", str(self.cores)]
+            eggnog_cmd += ["--pident", str(self.pident), "--query_cov", str(self.qcov)]
+            eggnog_cmd += ["--subject_cov", str(self.scov), "-o", str(fout)]
+            eggnog_cmd += ["-i", str(fasta_file), "--data_dir", str(self.database_dir)]
             if self.nucl:
-                eggnog_cmd += " --itype CDS --translate"
-            if not self.debug:
-                eggnog_cmd += " > /dev/null"
+                eggnog_cmd += ["--itype", "CDS", "--translate"]
             cmds.append(eggnog_cmd)
         self.eggnog_cmds = cmds
 
