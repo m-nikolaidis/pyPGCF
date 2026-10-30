@@ -52,11 +52,13 @@ class TestCAZYInstaller:
         assert installer.database_dir == temp_db_dir / "CAZY"
         assert installer.cores == 2
     
-    def test_cazy_installer_uses_default_dir(self):
+    def test_cazy_installer_uses_default_dir(self, temp_db_dir):
         """Test CAZY installer with None database_dir uses default"""
-        with patch('pypgcf.config.DB_BASE_DIR', Path("/mock/base")):
+        with patch('pypgcf.config.DB_BASE_DIR', temp_db_dir), patch.dict(
+            "os.environ", {}, clear=True
+        ):
             installer = CAZY_installer(database_dir=None, cores=2, debug=False)
-            assert installer.database_dir == Path("/mock/base") / "CAZY"
+            assert installer.database_dir == temp_db_dir / "CAZY"
 
 
 class TestVFInstaller:
@@ -317,12 +319,14 @@ class TestEGGNOGInstaller:
         assert installer.database_dir == temp_db_dir / "eggNOG"
         assert installer.database_dir.exists()
     
-    @patch('pypgcf.config.DB_BASE_DIR', Path("/mock/base"))
-    def test_eggnog_installer_with_default_dir(self):
+    def test_eggnog_installer_with_default_dir(self, temp_db_dir):
         """Test EGGNOG installer uses default directory"""
-        installer = EGGNOG_installer(database_dir=None, debug=False)
-        
-        expected = Path("/mock/base") / "site-packages" / "data"
+        with patch('pypgcf.config.DB_BASE_DIR', temp_db_dir), patch.dict(
+            "os.environ", {}, clear=True
+        ):
+            installer = EGGNOG_installer(database_dir=None, debug=False)
+
+        expected = temp_db_dir / "site-packages" / "data"
         assert installer.database_dir == expected
     
     @patch('pypgcf.databases.execute_command')
