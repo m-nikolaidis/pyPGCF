@@ -1054,6 +1054,16 @@ def run_workflow(args):
     else:
         input_type = "cds"
 
+    # Check the tools for every selected task before any work starts
+    tools = []
+    for task, selected in workflow_runner.tasks_to_execute.items():
+        if selected:
+            tools += required_tools(TASK_MAP[task], {"input_type": input_type})
+    try:
+        utils.check_tools(list(dict.fromkeys(tools)))
+    except RuntimeError as err:
+        raise SystemExit(f"Error: {err}")
+
     # Gather the proteomes list
     workflow_runner.load_input_genomes_or_proteomes_list()
 

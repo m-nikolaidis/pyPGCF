@@ -28,6 +28,24 @@ class TestToolPreflight(unittest.TestCase):
         self.assertIn("muscle, iqtree", str(ctx.exception.code))
         run.assert_not_called()
 
+    @patch("pypgcf.utils.shutil.which", return_value=None)
+    @patch("pypgcf.cli.WorkflowRunner")
+    def test_workflow_checks_tools_for_all_selected_tasks_first(
+        self, mock_WorkflowRunner, mock_which
+    ):
+        runner = mock_WorkflowRunner.return_value
+        runner.params = {"CDS_or_proteins": "CDS"}
+        runner.tasks_to_execute = {
+            "Calculate_orthologues": True,
+            "Calculate_entire_phylogenomic_tree": True,
+            "Calculate_cores": False,
+        }
+        args = {"in": "params.xlsx", "out": "out", "debug": False}
+        with self.assertRaises(SystemExit) as ctx:
+            cli.run_workflow(args)
+        self.assertIn("blastn, makeblastdb, muscle, iqtree", str(ctx.exception.code))
+        runner.load_input_genomes_or_proteomes_list.assert_not_called()
+
 
 class TestRunFunctions(unittest.TestCase):
     def test_workflow_defaults_include_every_phylogenomic_argument(self):
