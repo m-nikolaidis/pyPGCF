@@ -2,7 +2,6 @@ from pathlib import Path
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-import shlex
 from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
@@ -82,7 +81,7 @@ class TestCdsOgAlignment(unittest.TestCase):
             self._write_source(source)
 
             def fake_muscle(command, debug=False):
-                arguments = shlex.split(command)
+                arguments = list(command)
                 protein_input = Path(arguments[arguments.index("-in") + 1])
                 protein_output = Path(arguments[arguments.index("-out") + 1])
                 captured_temporary_paths.extend([protein_input, protein_output])
@@ -131,7 +130,7 @@ class TestCdsOgAlignment(unittest.TestCase):
             self._write_source(source)
 
             def fail_muscle(command, debug=False):
-                arguments = shlex.split(command)
+                arguments = list(command)
                 captured_temporary_paths.extend(
                     [
                         Path(arguments[arguments.index("-in") + 1]),
@@ -193,7 +192,7 @@ class TestCdsOgAlignment(unittest.TestCase):
             self._write_source(source)
 
             def write_unknown_alignment(command, debug=False):
-                arguments = shlex.split(command)
+                arguments = list(command)
                 protein_output = Path(arguments[arguments.index("-out") + 1])
                 SeqIO.write(
                     [SeqRecord(Seq("MKF"), id="unknown")],
@@ -278,8 +277,14 @@ class TestPhylogenomicAlignmentRouting(unittest.TestCase):
             self.assertEqual(
                 dispatch.call_args.args[1],
                 [
-                    "muscle -in "
-                    f"{source} -out {og_fasta_dir_aln / source.name} -quiet"
+                    [
+                        "muscle",
+                        "-in",
+                        str(source),
+                        "-out",
+                        str(og_fasta_dir_aln / source.name),
+                        "-quiet",
+                    ]
                 ],
             )
 
@@ -310,7 +315,7 @@ class TestPhylogenomicAlignmentRouting(unittest.TestCase):
             runner.debug = False
 
             def fake_muscle(command, debug=False):
-                arguments = shlex.split(command)
+                arguments = list(command)
                 protein_input = Path(arguments[arguments.index("-in") + 1])
                 protein_output = Path(arguments[arguments.index("-out") + 1])
                 captured_temporary_paths.extend([protein_input, protein_output])

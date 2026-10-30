@@ -1,7 +1,6 @@
 from datetime import datetime
 import logging
 from pathlib import Path
-from shlex import quote
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Union
 
@@ -97,12 +96,9 @@ def _align_cds_orthologous_group(
         protein_alignment = temporary_dir / "proteins.aln.faa"
         SeqIO.write(translated_records, protein_input, "fasta")
 
-        command = (
-            f"muscle -in {quote(str(protein_input))} "
-            f"-out {quote(str(protein_alignment))}"
-        )
+        command = ["muscle", "-in", str(protein_input), "-out", str(protein_alignment)]
         if not debug:
-            command += " -quiet"
+            command.append("-quiet")
         return_code = execute_command(command, debug=debug)
         if return_code != 0:
             raise RuntimeError(f"MUSCLE failed while aligning {source}")
@@ -280,17 +276,10 @@ class Phylogenomic:
 
         commands = []
         for file in orthologous_groups_files:
-            cmd = " ".join(
-                [
-                    "muscle",
-                    "-in",
-                    str(file),
-                    "-out",
-                    str(self.og_fasta_dir_aln / file.name),
-                ]
-            )
+            aligned = self.og_fasta_dir_aln / file.name
+            cmd = ["muscle", "-in", str(file), "-out", str(aligned)]
             if not self.debug:
-                cmd += " -quiet"
+                cmd.append("-quiet")
             commands.append(cmd)
         _ = multiprocess_dispatch(
             "system",
@@ -373,13 +362,12 @@ class Phylogenomic:
         Compute the phylogenomic tree using IQtree3
         """
         superalignment_file = self.out_dir / "superalignment.fa-gb"
-        cmd = "iqtree -m {} -merit AIC --alrt 1000 -T {} -s {}".format(
-            self.tree_model, self.cores, superalignment_file
-        )
+        cmd = ["iqtree", "-m", self.tree_model, "-merit", "AIC", "--alrt", "1000"]
+        cmd += ["-T", str(self.cores), "-s", str(superalignment_file)]
         if self.fast:
-            cmd += " --fast"
+            cmd.append("--fast")
         if not self.debug:
-            cmd += " --quiet"
+            cmd.append("--quiet")
         _ = execute_command(cmd, debug=self.debug)
 
     def move_iqtree_files(self):
