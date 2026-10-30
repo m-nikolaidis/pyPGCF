@@ -13,7 +13,7 @@ class TestAMRAnalyzer(unittest.TestCase):
 
         analyzer = amr.AMR_analyzer(
             fasta_files_list=[Path("/test/fasta1"), Path("/test/fasta2")],
-            database_dir=Path("/test/database"),
+            database_dir=Path("/test/database/AMR"),
             out_dir=Path("/test/out"),
             input_type="prot",
             available_cores=8,
@@ -49,7 +49,7 @@ class TestAMRAnalyzer(unittest.TestCase):
     def test_search_amr(self, mock_multiprocess_dispatch, mock_mkdir):
         analyzer = amr.AMR_analyzer(
             fasta_files_list=[Path("/test/fasta1"), Path("/test/fasta2")],
-            database_dir=Path("/test/database"),
+            database_dir=Path("/test/database/AMR"),
             out_dir=Path("/test/out"),
             input_type="prot",
             available_cores=8,
@@ -95,7 +95,7 @@ class TestAMRAnalyzer(unittest.TestCase):
 
         analyzer = amr.AMR_analyzer(
             fasta_files_list=[Path("/test/fasta1"), Path("/test/fasta2")],
-            database_dir=Path("/test/database"),
+            database_dir=Path("/test/database/AMR"),
             out_dir=Path("/test/out"),
             input_type="prot",
             available_cores=8,
