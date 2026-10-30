@@ -27,7 +27,7 @@ If you don't have mamba installed just replace the word 'mamba' with 'conda'.
 
 Create an environment with pyPGCF and the external tools it calls:
 
-`mamba create -n pyPGCF -c mnikolaidis -c conda-forge -c bioconda pypgcf iqtree muscle fastani mcl diamond blast fasttree`
+`mamba create -n pyPGCF -c mnikolaidis -c conda-forge -c bioconda pypgcf iqtree muscle fastani mcl diamond blast`
 
 The Python packages (pandas, scipy, biopython, openpyxl, tqdm, requests) are installed automatically.
 
@@ -45,7 +45,7 @@ The Python packages (pandas, scipy, biopython, openpyxl, tqdm, requests) are ins
 | --- | --- |
 | Species demarcation | fastANI, MCL |
 | Orthologues | BLAST+ (`blastp`, `makeblastdb`), DIAMOND |
-| Phylogenomic | MUSCLE, IQ-TREE, FastTree |
+| Phylogenomic | MUSCLE, IQ-TREE |
 | eggNOG annotation | eggNOG-mapper |
 | smBGC | antiSMASH |
 | AMR | AMRFinderPlus |

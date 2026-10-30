@@ -20,7 +20,6 @@ requirements:
     - muscle ==3.8.1551
     - blast
     - diamond
-    - fasttree
     - eggnog-mapper ==2.1.13
     - fastani >=1.34,<2
     - mcl >=22.282,<23
