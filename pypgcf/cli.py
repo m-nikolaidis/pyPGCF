@@ -553,7 +553,6 @@ def add_cazy_subparser(subparsers):
         type=int,
         default=default_num_concurrent(software_defaults["cazy"]["cores"]),
     )
-
     cazy.add_argument("--debug", help="Print debug information", action="store_true")
 
 

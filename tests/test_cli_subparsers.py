@@ -373,6 +373,10 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["out"], "output_dir")
         self.assertEqual(args["fasta_dir"], "fasta_dir")
         self.assertEqual(args["db"], None)
+        self.assertEqual(
+            args["num_concurrent"],
+            cli.default_num_concurrent(cli.software_defaults["cazy"]["cores"]),
+        )
 
     def test_add_amr_subparser(self):
         # Simulate CLI input for the amr module
