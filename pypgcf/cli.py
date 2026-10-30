@@ -15,7 +15,12 @@ from tqdm import tqdm
 from pypgcf import utils
 from pypgcf.amr import AMR_analyzer
 from pypgcf.cazy import CAZY_analyzer
-from pypgcf.config import software_defaults, DB_BASE_DIR, default_num_concurrent
+from pypgcf.config import (
+    software_defaults,
+    DB_BASE_DIR,
+    MODULE_TOOLS,
+    default_num_concurrent,
+)
 from pypgcf.core import Core_identifier
 from pypgcf.databases import (
     AMR_installer,
@@ -1217,11 +1222,24 @@ def run_workflow(args):
     return None
 
 
+def required_tools(module: str, args: dict) -> list:
+    """External binaries a module run needs, given its arguments."""
+    if module == "orthologues" and args.get("input_type") == "cds":
+        return MODULE_TOOLS["orthologues_cds"]
+    if module == "download" and args.get("perform_fastani"):
+        return MODULE_TOOLS["download"] + MODULE_TOOLS["species_demarcation"]
+    return MODULE_TOOLS.get(module, [])
+
+
 def main():
     parser = setup_parser()
     args = vars(parser.parse_args())
     configure_output(args.get("debug", False))
     print(f"Running {args['module']}")
+    try:
+        utils.check_tools(required_tools(args["module"], args))
+    except RuntimeError as err:
+        raise SystemExit(f"Error: {err}")
 
     if args["module"] == "species_demarcation":
         run_species_demarcation(args)
