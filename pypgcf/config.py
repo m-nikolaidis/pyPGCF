@@ -1,12 +1,43 @@
 # Default configurations for the various modules
 # By M. Nikolaidis
 
+import logging
 from multiprocessing import cpu_count
+import os
 from sys import platform 
 import sysconfig
 from pathlib import Path
+from typing import Optional, Union
 
 DB_BASE_DIR = Path(sysconfig.get_config_var("BINLIBDEST")) / "site-packages"
+DB_DIR_ENV = "PYPGCF_DB_DIR"
+DB_SUBDIRS = {
+    "cazy": "CAZY",
+    "virulence": "Virulence",
+    "amr": "AMR",
+    "smbgc": "smBGC",
+    "eggnog": "eggNOG",
+}
+
+
+def database_dir(
+    module: str, cli_value: Union[str, Path, None] = None
+) -> Optional[Path]:
+    """
+    Database directory for a module. The --db option wins, then the
+    PYPGCF_DB_DIR environment variable, then the default location.
+    """
+    root = cli_value or os.environ.get(DB_DIR_ENV)
+    if root:
+        path = Path(root) / DB_SUBDIRS[module]
+    elif module == "smbgc":
+        path = None  # antiSMASH uses its own default database location
+    elif module == "eggnog":
+        path = DB_BASE_DIR / "site-packages" / "data"  # used by earlier releases
+    else:
+        path = DB_BASE_DIR / DB_SUBDIRS[module]
+    logging.info(f"{module} database directory: {path}")
+    return path
 TEST_DATA_DIR = Path(__file__).parent / ".." / "test_data/"
 
 system_cores = cpu_count()
