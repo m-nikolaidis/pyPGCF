@@ -47,3 +47,19 @@ jobs:
           "
       - name: Tests with external tools
         run: pixi run -e test --locked test
+
+  package:
+    # Build the conda package and run the recipe tests in a fresh environment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install pixi 0.62.2
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://github.com/prefix-dev/pixi/releases/download/v0.62.2/pixi-x86_64-unknown-linux-musl.tar.gz \
+            | tar -xz -C "$HOME/.local/bin" pixi
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Build and test the recipe with rattler-build
+        run: pixi exec rattler-build build -r recipe/recipe.yaml -c conda-forge -c bioconda --output-dir dist
+      - name: Build with pixi build
+        run: pixi build --output-dir pixi-dist
