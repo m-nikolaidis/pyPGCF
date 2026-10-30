@@ -76,7 +76,8 @@ class AMR_analyzer:
         for idx, f in enumerate(files):
             genome = f.stem
             df = read_csv(f, sep="\t", index_col=0)
-            df = df[df["Element type"] == "AMR"]
+            type_column = "Type" if "Type" in df.columns else "Element type"
+            df = df[df[type_column] == "AMR"]
             df["Genome"] = genome
             dfs[idx] = df
 
