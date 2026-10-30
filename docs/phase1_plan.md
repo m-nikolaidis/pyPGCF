@@ -61,8 +61,12 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 - In pixi, express full as a `full` feature.
 - Done when: the core environment solves and runs the core test set.
 
-### 6. Explicit database paths — NOT STARTED
-- `PYPGCF_DB_DIR` environment variable and `--db_dir` option. Keep the `sysconfig` default as fallback. Log the resolved path.
+### 6. Explicit database paths — DONE
+- `config.database_dir(module, cli_value)` is the only place a database path is resolved: the CLI option, then `PYPGCF_DB_DIR`, then the earlier default. It logs the result (visible with `--debug`).
+- Kept the existing option names (`--db` per module, `-db` for workflow, `--database_dir` for installs) instead of adding `--db_dir`, so existing commands keep working.
+- Defaults are unchanged, including eggNOG's legacy `site-packages/site-packages/data` path, so existing installs keep working.
+- Bugs fixed on the way: CAZy and AMR read from `CAZY/CAZY` and `AMR/AMR` while installers wrote `CAZY` and `AMR`; `pyPGCF databases` without `--database_dir` crashed; `pyPGCF amr`, `pyPGCF eggnog` (after the mapper step) and `pyPGCF cazy` crashed with wrong constructor arguments or missing options; `pyPGCF amr` without `-out` crashed instead of printing usage.
+- `tests/test_cli_signatures.py` binds every run function's constructor calls against the real signatures, so this class of crash fails the tests.
 
 ### 7. CI — NOT STARTED
 - GitHub Actions: lint (flake8, black check), unit tests on Python 3.11 and 3.12, smoke test (`pyPGCF -h`).
