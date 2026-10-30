@@ -6,8 +6,8 @@ import pytest
 
 
 class TestRunFunctions(unittest.TestCase):
-    @patch("context.cli.SpeciesDemarcator")
-    @patch("context.cli.validate_directory", return_value=True)
+    @patch("pypgcf.cli.SpeciesDemarcator")
+    @patch("pypgcf.cli.validate_directory", return_value=True)
     def test_run_species_demarcation(
         self, mock_validate_directory, mock_SpeciesDemarcator
     ):
@@ -21,6 +21,7 @@ class TestRunFunctions(unittest.TestCase):
             "minfraction": 0.7,
             "inflation": 2.0,
             "mcl_cores": 4,
+            "prefix": "C",
         }
 
         mock_instance = mock_SpeciesDemarcator.return_value
@@ -37,11 +38,12 @@ class TestRunFunctions(unittest.TestCase):
             minfrac=0.7,
             inflation=2.0,
             mcl_cores=4,
+            cluster_prefix="C",
             debug=True,
         )
         mock_instance.assign_species.assert_called_once()
 
-    @patch("context.cli.Orthologues_identifier")
+    @patch("pypgcf.cli.Orthologues_identifier")
     def test_run_orthologues(self, mock_Orthologues_identifier):
         args = {
             "fasta_files": ["file1", "file2"],
@@ -75,8 +77,8 @@ class TestRunFunctions(unittest.TestCase):
         )
         mock_instance.calculate_orthologues.assert_called_once()
 
-    @patch("context.cli.read_excel")
-    @patch("context.cli.Core_identifier")
+    @patch("pypgcf.cli.read_excel")
+    @patch("pypgcf.cli.Core_identifier")
     @patch(
         "context.cli.tqdm",
         return_value=[Path("ortholog_matrix_1"), Path("ortholog_matrix_2")],
@@ -119,7 +121,7 @@ class TestRunFunctions(unittest.TestCase):
             ]
         )
 
-    @patch("context.cli.Phylogenomic")
+    @patch("pypgcf.cli.Phylogenomic")
     def test_run_phylogenomic(self, mock_Phylogenomic):
         args = {
             "in": "orthologies_matrix.xlsx",
@@ -140,6 +142,7 @@ class TestRunFunctions(unittest.TestCase):
         mock_Phylogenomic.assert_called_once_with(
             orthology_matrix_in=Path("orthologies_matrix.xlsx"),
             cores=8,
+            available_cores=cli.software_defaults["system"]["usable_cores"],
             fasta_files_list=["file1.fasta", "file2.fasta"],
             out_dir=Path("output_directory"),
             no_keep_fasta=True,
@@ -150,9 +153,9 @@ class TestRunFunctions(unittest.TestCase):
         )
         mock_instance.run_phylogenomic.assert_called_once()
 
-    @patch("context.cli.EggNOGRunner")
-    @patch("context.cli.EggNOGParser")
-    @patch("context.cli.DB_BASE_DIR", new_callable=Path)
+    @patch("pypgcf.cli.EggNOGRunner")
+    @patch("pypgcf.cli.EggNOGParser")
+    @patch("pypgcf.cli.DB_BASE_DIR", new_callable=Path)
     def test_run_eggnog(self, mock_DB_BASE_DIR, mock_EggNOGParser, mock_EggNOGRunner):
         args = {
             "debug": True,
@@ -210,8 +213,8 @@ class TestRunFunctions(unittest.TestCase):
         )
         mock_parser_instance.compare_proteome_to_core_and_fps.assert_called_once()
 
-    @patch("context.cli.smBGCLocalRunner")
-    @patch("context.cli.smBGCParser")
+    @patch("pypgcf.cli.smBGCLocalRunner")
+    @patch("pypgcf.cli.smBGCParser")
     def test_run_smbgc(self, mock_smBGCParser, mock_smBGCLocalRunner):
         args = {
             "debug": True,
@@ -244,7 +247,7 @@ class TestRunFunctions(unittest.TestCase):
         mock_smBGCParser.assert_called_once_with(Path("output_directory"), 8)
         mock_instance_parser.gather_results.assert_called_once()
 
-    @patch("context.cli.VF_analyzer")
+    @patch("pypgcf.cli.VF_analyzer")
     def test_run_virulence(self, mock_VF_analyzer):
         args = {
             "out": "output_directory",
@@ -277,7 +280,7 @@ class TestRunFunctions(unittest.TestCase):
         mock_instance.execute_homology_search.assert_called_once()
         mock_instance.parse_results.assert_called_once()
 
-    @patch("context.cli.CAZY_analyzer")
+    @patch("pypgcf.cli.CAZY_analyzer")
     def test_run_cazy(self, mock_CAZY_analyzer):
         args = {
             "out": "output_directory",
@@ -307,7 +310,7 @@ class TestRunFunctions(unittest.TestCase):
         )
         mock_instance.execute_cazy_search.assert_called_once()
 
-    @patch("context.cli.AMR_analyzer")
+    @patch("pypgcf.cli.AMR_analyzer")
     def test_run_amr(self, mock_AMR_analyzer):
         args = {
             "out": "output_directory",
@@ -336,13 +339,13 @@ class TestRunFunctions(unittest.TestCase):
         mock_instance.search_amr.assert_called_once()
         mock_instance.parse_results.assert_called_once()
 
-    @patch("context.cli.GenomeDownloader")
-    @patch("context.cli.validate_directory", return_value=True)
-    @patch("context.cli.read_excel")
-    @patch("context.cli.utils.join_pandas_dataframes")
-    @patch("context.cli.utils.check_if_dir_exists", return_value=True)
-    @patch("context.cli.utils.check_if_dir_is_empty", return_value=False)
-    @patch("context.cli.SpeciesDemarcator")
+    @patch("pypgcf.cli.GenomeDownloader")
+    @patch("pypgcf.cli.validate_directory", return_value=True)
+    @patch("pypgcf.cli.read_excel")
+    @patch("pypgcf.cli.utils.join_pandas_dataframes")
+    @patch("pypgcf.cli.utils.check_if_dir_exists", return_value=True)
+    @patch("pypgcf.cli.utils.check_if_dir_is_empty", return_value=False)
+    @patch("pypgcf.cli.SpeciesDemarcator")
     def test_run_download(
         self,
         mock_SpeciesDemarcator,
@@ -360,6 +363,8 @@ class TestRunFunctions(unittest.TestCase):
             "source": "RefSeq",
             "keep_plasmids": False,
             "keep_download": False,
+            "limit_to_ref": False,
+            "keep_gbff": False,
             "perform_fastani": True,
             "debug": True,
         }
@@ -376,6 +381,7 @@ class TestRunFunctions(unittest.TestCase):
             assembly_level="complete",
             assembly_source="RefSeq",
             keep_plasmids=False,
+            limit_to_ref=False,
             debug=True,
         )
         downloader_instance.download_hydrated.assert_called_once()
@@ -395,6 +401,7 @@ class TestRunFunctions(unittest.TestCase):
             minfrac=cli.software_defaults["species_demarcation"]["minfrac"],
             inflation=cli.software_defaults["species_demarcation"]["inflation"],
             mcl_cores=cli.software_defaults["species_demarcation"]["cores"],
+            cluster_prefix=cli.software_defaults["species_demarcation"]["prefix"],
             debug=True,
         )
         demarcator_instance.assign_species.assert_called_once()
@@ -409,11 +416,11 @@ class TestRunFunctions(unittest.TestCase):
         )
         mock_join_pandas_dataframes.assert_called_once()
 
-    @patch("context.cli.SMBGC_installer")
-    @patch("context.cli.EGGNOG_installer")
-    @patch("context.cli.CAZY_installer")
-    @patch("context.cli.AMR_installer")
-    @patch("context.cli.VF_installer")
+    @patch("pypgcf.cli.SMBGC_installer")
+    @patch("pypgcf.cli.EGGNOG_installer")
+    @patch("pypgcf.cli.CAZY_installer")
+    @patch("pypgcf.cli.AMR_installer")
+    @patch("pypgcf.cli.VF_installer")
     def test_run_databases_invalid(
         self,
         mock_VF_installer,
@@ -423,8 +430,8 @@ class TestRunFunctions(unittest.TestCase):
         mock_SMBGC_installer,
     ):
         args = {
-            "db": "all,smbgc",
-            "db_dir": "custom_db_dir",
+            "install": "all,smbgc",
+            "database_dir": "custom_db_dir",
             "debug": True,
             "cores": 8,
         }
@@ -434,8 +441,8 @@ class TestRunFunctions(unittest.TestCase):
             cli.run_databases(args)
 
     @pytest.mark.skip(reason="Not implemented correctly")
-    @patch("context.cli.SMBGC_installer")
-    @patch("context.cli.EGGNOG_installer")
+    @patch("pypgcf.cli.SMBGC_installer")
+    @patch("pypgcf.cli.EGGNOG_installer")
     def test_run_databases_valid_combination(
         self,
         mock_EGGNOG_installer,
@@ -461,11 +468,11 @@ class TestRunFunctions(unittest.TestCase):
         # mock_EGGNOG_installer.return_value.install_database.assert_called_once()
 
     @pytest.mark.skip(reason="Not implemented correctly")
-    @patch("context.cli.SMBGC_installer")
-    @patch("context.cli.EGGNOG_installer")
-    @patch("context.cli.CAZY_installer")
-    @patch("context.cli.AMR_installer")
-    @patch("context.cli.VF_installer")
+    @patch("pypgcf.cli.SMBGC_installer")
+    @patch("pypgcf.cli.EGGNOG_installer")
+    @patch("pypgcf.cli.CAZY_installer")
+    @patch("pypgcf.cli.AMR_installer")
+    @patch("pypgcf.cli.VF_installer")
     def test_run_databases_all(
         self,
         mock_VF_installer,
@@ -505,7 +512,7 @@ class TestRunFunctions(unittest.TestCase):
         )
         mock_VF_installer.return_value.install_database.assert_called_once()
 
-    @patch("context.cli.WorkflowRunner")
+    @patch("pypgcf.cli.WorkflowRunner")
     def test_run_workflow(self, mock_WorkflowRunner):
         args = {
             "in": "parameters_file.xlsx",
@@ -515,6 +522,7 @@ class TestRunFunctions(unittest.TestCase):
         }
 
         workflow_instance = mock_WorkflowRunner.return_value
+        workflow_instance.params = {"CDS_or_proteins": "Proteins"}
 
         cli.run_workflow(args)
 
