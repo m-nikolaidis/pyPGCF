@@ -17,10 +17,10 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 
 ## Work items
 
-### 1. Remove the duplicate orchestrator — DONE (pending commit)
+### 1. Remove the duplicate orchestrator — DONE
 - Deleted `pypgcf/pipeline.py`. `workflow.py` is the only orchestrator. The test suite passes without it.
 
-### 2. Declare the real dependencies — DONE (pending push)
+### 2. Declare the real dependencies — DONE
 - `pyproject.toml` lists the Python runtime dependencies (pandas, openpyxl, tqdm, biopython, requests, scipy) and `requires-python = ">=3.11,<3.13"`.
 - `pixi.toml` and `recipe.yaml` match that list, and also declare BLAST and DIAMOND, which were missing. FastTree was dropped: phylogenomic now uses `iqtree --fast` (`pyPGCF phylogenomic --fast`), so no separate FastTree dependency is needed.
 - Version is set once in `pyproject.toml` (2.0.1). `pypgcf.__version__` reads it from package metadata. `recipe.yaml` had 2.0.1.2 and is now 2.0.1.
@@ -28,7 +28,7 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 - Verified: a clean export of HEAD installs with `pip install .` on Python 3.11 and 3.12 and `import pypgcf.cli` works. The full suite passes.
 - Still open: `pixi.lock` needs regenerating with `pixi lock` (pixi was not available here).
 
-### 3. Triage and fix the failing tests — DONE (pending commit)
+### 3. Triage and fix the failing tests — DONE
 - `pytest` runs from the repo root with no `PYTHONPATH` (`pythonpath = ["tests"]` in `pyproject.toml`).
 - Result: 182 passed, 32 skipped, 0 failed (baseline before work: 136 passed, 35 failed, 20 skipped, with `test_databases.py` not collected).
 - Mock patch targets rewritten from `context.<module>` / `databases.<name>` to the real `pypgcf.<module>` paths.
@@ -46,3 +46,35 @@ Measured in a Python 3.11 environment with pytest 9.1 and the runtime packages i
 2. **Test data:** commit a small fixture subset under `tests/data` (a few genomes plus expected outputs) so the `data`-marked tests run in CI. Not started yet.
 3. **Python range:** widen to `>=3.11,<3.13`, and test both versions in CI. Applies to item 2 and the conda recipe.
 4. **Excel parameter files:** stay supported through Phase 1. YAML config comes in Phase 2.
+
+### 4. Replace `os.system` with `subprocess`; add a tool preflight — DONE
+- `utils.execute_command` uses `subprocess.run`. A string still runs through the shell; a list of arguments runs without one. It returns the exit code (not `os.system`'s wait status).
+- Phylogenomic (MUSCLE, IQ-TREE) and orthologues (DIAMOND, BLAST) build argument lists.
+- `config.MODULE_TOOLS` lists the binaries per module and `config.TOOL_PACKAGES` the conda package for each. `utils.check_tools` reports every missing binary with the `mamba install` command.
+- `pyPGCF <module>` checks its tools before any work starts. A workflow checks the tools for all selected tasks before gathering input.
+- Bugs fixed on the way: CDS orthologues built `blastn makedb` and `blastn blastp` commands (wrong input-type checks), and orthologues `--input_type` accepted any string, so `CDS` silently ran DIAMOND on nucleotides.
+- Still on shell strings: species demarcation (MCL pipeline with redirection), eggNOG, smBGC, AMR, CAZy, virulence, download and database installers. They work unchanged; migrate them when those modules are next touched.
+
+### 5. Split the dependency suite into core and full environments — NOT STARTED
+- Core: FastANI, BLAST/DIAMOND, MCL, MUSCLE, IQ-TREE (species demarcation, orthologues, core, phylogenomic).
+- Full: adds eggNOG-mapper, antiSMASH, dbCAN, AMRFinderPlus, ncbi-datasets.
+- In pixi, express full as a `full` feature.
+- Done when: the core environment solves and runs the core test set.
+
+### 6. Explicit database paths — NOT STARTED
+- `PYPGCF_DB_DIR` environment variable and `--db_dir` option. Keep the `sysconfig` default as fallback. Log the resolved path.
+
+### 7. CI — NOT STARTED
+- GitHub Actions: lint (flake8, black check), unit tests on Python 3.11 and 3.12, smoke test (`pyPGCF -h`).
+- Second job: core tools via pixi, runs `external`-marked tests.
+- Done when: a PR shows green checks.
+
+### 8. Bioconda packaging check — NOT STARTED
+- Build the recipe locally; confirm the recipe's test commands pass.
+- Done when: the package installs into an empty conda environment and `pyPGCF core --help` works.
+
+## Sequence
+
+- Week 1: items 1, 2, 3.
+- Week 2: items 4, 5, 6.
+- Week 3: items 7, 8.
