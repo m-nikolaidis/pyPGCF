@@ -25,11 +25,10 @@ def mock_execute_command(cmd):
 
 
 class TestsmBGCLocalRunner(unittest.TestCase):
-    @patch("pathlib.Path.glob", return_value=[Path("test_genome.fasta")])
-    def test_init(self, mock_glob):
+    def test_init(self):
         # Test the initialization of smBGCLocalRunner
         runner = smbgc.smBGCLocalRunner(
-            genome_fasta_dir=Path("/genomes"),
+            genome_fasta_files=[Path("/genomes/test_genome.fasta")],
             out_dir=Path("/output"),
             strictness="relaxed",
             genefinding_tool="prodigal",
@@ -39,7 +38,6 @@ class TestsmBGCLocalRunner(unittest.TestCase):
             concurrent=True,
             debug=True,
         )
-        self.assertEqual(runner.genome_fasta_dir, Path("/genomes"))
         self.assertEqual(
             runner.antismash_raw_results_dir,
             Path("/output/smBGC/antismash_raw_results"),
@@ -57,7 +55,7 @@ class TestsmBGCLocalRunner(unittest.TestCase):
     def test_create_antismash_cmd(self):
         # Test the command generation
         runner = smbgc.smBGCLocalRunner(
-            genome_fasta_dir=Path("/genomes"),
+            genome_fasta_files=[Path("/genomes/test_genome.fasta")],
             out_dir=Path("/output"),
             strictness="relaxed",
             genefinding_tool="prodigal",
@@ -70,18 +68,17 @@ class TestsmBGCLocalRunner(unittest.TestCase):
         cmd = runner.create_antismash_cmd(Path("genome.fasta"), Path("/output/genome"))
         expected_cmd = (
             "antismash --output-dir /output/genome --cpu 4 --hmmdetection-strictness relaxed "
-            "--genefinding-tool prodigal --cb-knownclusters /genome.fasta -v -d"
+            f"--genefinding-tool prodigal --cb-knownclusters {Path('genome.fasta').absolute()} -v -d"
         )
         self.assertEqual(cmd, expected_cmd)
 
     @patch("pathlib.Path.mkdir")
-    @patch("unittest.mock.MagicMock")
-    @patch("context.smbgc.smBGCLocalRunner.create_antismash_cmd")
-    @patch("context.utils.multiprocess_dispatch")
+    @patch("pypgcf.smbgc.smBGCLocalRunner.create_antismash_cmd")
+    @patch("pypgcf.smbgc.multiprocess_dispatch")
     def test_analyze_genomes(self, mock_dispatch, mock_create_cmd, mock_mkdir):
         # Test the analyze_genomes function
         runner = smbgc.smBGCLocalRunner(
-            genome_fasta_dir=Path("/genomes"),
+            genome_fasta_files=[Path("/genomes/test_genome.fasta")],
             out_dir=Path("/output"),
             strictness="relaxed",
             genefinding_tool="prodigal",
@@ -134,8 +131,8 @@ class TestsmBGCParser(unittest.TestCase):
             ]
         },
     )
-    @patch("context.smbgc.smBGCParser.has_identified_smbgcs", return_value=True)
-    @patch("context.utils.check_if_file_exists", side_effect=mock_check_if_file_exists)
+    @patch("pypgcf.smbgc.smBGCParser.has_identified_smbgcs", return_value=True)
+    @patch("pypgcf.utils.check_if_file_exists", side_effect=mock_check_if_file_exists)
     def test_parse_strain_results_empty(
         self, mock_exists, mock_has_smbgcs, mock_load_json
     ):
@@ -163,15 +160,16 @@ class TestsmBGCParser(unittest.TestCase):
         mock_to_excel.assert_called_once()
 
     @patch(
-        "context.utils.multiprocess_dispatch", side_effect=mock_multiprocess_dispatch
+        "pypgcf.smbgc.multiprocess_dispatch", side_effect=mock_multiprocess_dispatch
     )
-    @patch("pandas.concat")
-    @patch("context.smbgc.smBGCParser.write_antismash_results")
-    def test_gather_results(self, mock_write_results, mock_concat, mock_dispatch):
+    @patch("pypgcf.smbgc.smBGCParser.write_antismash_results")
+    def test_gather_results(self, mock_write_results, mock_dispatch):
         # Test the gather_results method
+        self.parser.antismash_subdirs = [Path("/output/smBGC/genome_1")]
         self.parser.gather_results()
-        mock_dispatch.assert_called_none()
-        mock_write_results.assert_called_none()
+        mock_dispatch.assert_called_once()
+        mock_write_results.assert_called_once()
+        self.assertEqual(self.parser.final_df["test"].tolist(), [1, 2, 3])
 
 
 if __name__ == "__main__":
