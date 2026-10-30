@@ -53,6 +53,7 @@ software_defaults = {
         "valid_tree_methods": ["NJ", "IQTree"],
         "method": "IQTree",
         "tree_model": "TEST",
+        "fast": False,
         "input_type": "prot",
         "valid_input_types": ["prot", "cds"],
         "no_keep_fasta": False,
