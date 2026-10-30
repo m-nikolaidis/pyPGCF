@@ -920,7 +920,7 @@ def run_amr(args):
         out_dir=out_dir,
         input_type=input_type,
         available_cores=software_defaults["system"]["usable_cores"],
-        cores=cores,
+        blast_cores=cores,
         num_concurrent=args["num_concurrent"],
         debug=debug,
     )
