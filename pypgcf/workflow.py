@@ -102,8 +102,10 @@ class WorkflowRunner:
             if "input_" in input:
                 self.params[input] = Path(val)
                 continue
-            if val in expected_val:
-                continue
+            if val not in expected_val:
+                raise ValueError(
+                    f"{input} is {val!r}; expected one of {', '.join(expected_val)}"
+                )
         return None
 
     def load_input_genomes_or_proteomes_list(self) -> None:

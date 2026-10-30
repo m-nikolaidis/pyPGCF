@@ -70,6 +70,11 @@ class TestWorkflowRunner(unittest.TestCase):
         }
         self.runner.validate_parameters()
 
+        # A removed or misspelled choice is rejected before any work starts
+        self.runner.params["Calculate_entire_phylogenomic_tree"] = "Fasttree"
+        with self.assertRaisesRegex(ValueError, "Fasttree"):
+            self.runner.validate_parameters()
+
     @patch("pypgcf.workflow.read_csv")
     def test_load_input_genomes_or_proteomes_list(self, mock_read_csv):
         mock_df = DataFrame.from_dict(
