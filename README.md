@@ -59,6 +59,18 @@ Each module checks for its tools before it starts, and lists any that are missin
 Notes:
 1) The software should move to the bioconda channel in the near future
 
+## Databases
+
+Download the databases with `pyPGCF databases --install all` (or a comma-separated list such as `cazy,amr`).
+
+The database directory is chosen in this order:
+
+1. `--database_dir` when installing, or `--db` when running a module (`-db` for `workflow`)
+2. The `PYPGCF_DB_DIR` environment variable
+3. The default location inside the Python environment
+
+Each database lives in its own subdirectory (`eggNOG`, `smBGC`, `Virulence`, `CAZY`, `AMR`). Set `PYPGCF_DB_DIR` once to keep the databases outside the environment, for example on shared storage.
+
 ## Running
 Details on how to run each module are available in video format in **[figshare](https://figshare.com/articles/media/pyPGCF_screencasts/22559992)**.
 The help page of the software and each module is available through the --help flag: `pyPGCF --help`

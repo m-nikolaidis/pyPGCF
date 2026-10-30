@@ -362,7 +362,8 @@ def add_eggnog_subparser(subparsers):
     )
     eggnog_mapper.add_argument(
         "--db",
-        help="Non default database directory. This directory is expected to contain a 'eggNOG' subdirectory",
+        help="Database directory containing a 'eggNOG' subdirectory. "
+        "Defaults to $PYPGCF_DB_DIR, then the install location",
     )
 
 
@@ -399,7 +400,8 @@ def add_smbgc_subparser(subparsers):
     )
     smbgc.add_argument(
         "--db",
-        help="Non default database directory. This directory is expected to contain a 'smBGC' subdirectory",
+        help="Database directory containing a 'smBGC' subdirectory. "
+        "Defaults to $PYPGCF_DB_DIR, then the install location",
     )
     smbgc.add_argument(
         "--cores",
@@ -487,7 +489,8 @@ def add_virulence_subparser(subparsers):
     )
     virulence.add_argument(
         "--db",
-        help="Non default database directory. This directory is expected to contain a 'Virulence' subdirectory",
+        help="Database directory containing a 'Virulence' subdirectory. "
+        "Defaults to $PYPGCF_DB_DIR, then the install location",
     )
     virulence.add_argument(
         "--cores",
@@ -534,7 +537,8 @@ def add_cazy_subparser(subparsers):
     )
     cazy.add_argument(
         "--db",
-        help="Non default database directory. This directory is expected to contain a 'CAZY' subdirectory",
+        help="Database directory containing a 'CAZY' subdirectory. "
+        "Defaults to $PYPGCF_DB_DIR, then the install location",
     )
     cazy.add_argument(
         "--cores",
@@ -575,7 +579,8 @@ def add_amr_subparser(subparsers):
     )
     amr.add_argument(
         "--db",
-        help="Non default database directory. This directory is expected to contain a 'AMR' subdirectory",
+        help="Database directory containing a 'AMR' subdirectory. "
+        "Defaults to $PYPGCF_DB_DIR, then the install location",
     )
     amr.add_argument(
         "--cores",
@@ -601,7 +606,11 @@ def add_workflow_subparser(subparsers):
     )
     workflow.add_argument("-in", metavar="in", help="Parameters file", required=True)
     workflow.add_argument("-out", metavar="out", help="Output directory", required=True)
-    workflow.add_argument("-db", metavar="db", help="Database directory")
+    workflow.add_argument(
+        "-db",
+        metavar="db",
+        help="Database directory. Defaults to $PYPGCF_DB_DIR, then the install location",
+    )
     workflow.add_argument(
         "--debug", help="Print debug information", action="store_true"
     )
@@ -624,7 +633,7 @@ def add_databases_subparser(subparsers):
     databases.add_argument(
         "--database_dir",
         metavar="db_dir",
-        help="Specific download directory",
+        help="Download directory. Defaults to $PYPGCF_DB_DIR, then the install location",
         default=software_defaults["database"]["db_dir"],
     )
     databases.add_argument(
