@@ -29,6 +29,7 @@ class TestSpeciesDemarcator(unittest.TestCase):
             minfrac=self.minfrac,
             inflation=self.inflation,
             mcl_cores=self.mcl_cores,
+            cluster_prefix="C",
             debug=self.debug,
         )
 
@@ -49,7 +50,7 @@ class TestSpeciesDemarcator(unittest.TestCase):
         )
 
     @pytest.mark.skip(reason="Needs existing file")
-    @patch("context.utils.execute_command")
+    @patch("pypgcf.utils.execute_command")
     def test_perform_fastani(self, mock_execute_command):
         org_list = Path("/path/to/org_list.txt")
         fout = Path("/path/to/output.txt")
@@ -62,7 +63,7 @@ class TestSpeciesDemarcator(unittest.TestCase):
         )
         mock_execute_command.assert_called_once_with(cmd)
 
-    @patch("context.utils.execute_command")
+    @patch("pypgcf.utils.execute_command")
     def test_perform_fastani_failure(self, mock_execute_command):
         org_list = Path("/path/to/org_list.txt")
         fout = Path("/path/to/output.txt")
@@ -71,7 +72,7 @@ class TestSpeciesDemarcator(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.demarcator.perform_fastani(org_list, fout)
 
-    @patch("pandas.read_csv")
+    @patch("pypgcf.species_demarcation.read_csv")
     @patch("pandas.DataFrame.to_csv")
     def test_prepare_input_for_mcl(self, mock_to_csv, mock_read_csv):
         mock_df = pd.DataFrame(
@@ -153,13 +154,13 @@ class TestSpeciesDemarcator(unittest.TestCase):
         self.assertTrue(mock_open.called)
         self.assertTrue(mock_to_excel.called)
 
-    @patch("context.species_demarcation.SpeciesDemarcator.create_directories")
-    @patch("context.species_demarcation.SpeciesDemarcator.create_input_for_fastani")
-    @patch("context.species_demarcation.SpeciesDemarcator.perform_fastani")
-    @patch("context.species_demarcation.SpeciesDemarcator.prepare_input_for_mcl")
-    @patch("context.species_demarcation.SpeciesDemarcator.run_mcl")
-    @patch("context.species_demarcation.SpeciesDemarcator.parse_mcx_output")
-    @patch("context.species_demarcation.check_if_file_exists", return_value=True)
+    @patch("pypgcf.species_demarcation.SpeciesDemarcator.create_directories")
+    @patch("pypgcf.species_demarcation.SpeciesDemarcator.create_input_for_fastani")
+    @patch("pypgcf.species_demarcation.SpeciesDemarcator.perform_fastani")
+    @patch("pypgcf.species_demarcation.SpeciesDemarcator.prepare_input_for_mcl")
+    @patch("pypgcf.species_demarcation.SpeciesDemarcator.run_mcl")
+    @patch("pypgcf.species_demarcation.SpeciesDemarcator.parse_mcx_output")
+    @patch("pypgcf.species_demarcation.check_if_file_exists", return_value=True)
     def test_assign_species(
         self,
         mock_check_if_file_exists,
