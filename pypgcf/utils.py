@@ -10,6 +10,7 @@ from math import floor
 from multiprocessing import get_context
 from pathlib import Path
 import re
+import shutil
 import subprocess
 from tempfile import mkstemp
 from typing import Callable, List, Union
@@ -225,6 +226,21 @@ def multiprocess_dispatch(
         else:
             results = list(executor.map(f, args))
     return results
+
+
+def check_tools(tools: List[str]) -> None:
+    """
+    Raise RuntimeError naming every tool that is not on PATH,
+    with the conda command that installs them.
+    """
+    missing = [tool for tool in tools if shutil.which(tool) is None]
+    if not missing:
+        return
+    packages = sorted({config.TOOL_PACKAGES.get(tool, tool) for tool in missing})
+    raise RuntimeError(
+        f"Required tools not found on PATH: {', '.join(missing)}. "
+        f"Install with: mamba install -c conda-forge -c bioconda {' '.join(packages)}"
+    )
 
 
 def execute_command(cmd: Union[str, List[str]], debug: bool = False) -> int:

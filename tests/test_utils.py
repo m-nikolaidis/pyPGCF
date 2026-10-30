@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandas import DataFrame
 
-from context import utils
+from context import config, utils
 
 
 def _helper(x: int):
@@ -110,6 +110,24 @@ class TestUtilityModule(unittest.TestCase):
             index=[0, 1, 2],
         )
         assert_frame_equal(result, expected)
+
+    @patch("pypgcf.utils.shutil.which", return_value="/usr/bin/tool")
+    def test_check_tools_passes_when_all_present(self, mock_which):
+        utils.check_tools(["muscle", "iqtree"])
+
+    @patch("pypgcf.utils.shutil.which", return_value=None)
+    def test_check_tools_names_missing_tools_and_packages(self, mock_which):
+        with self.assertRaises(RuntimeError) as ctx:
+            utils.check_tools(["mcl", "mcxload", "fastANI"])
+        message = str(ctx.exception)
+        self.assertIn("mcl, mcxload, fastANI", message)
+        self.assertIn("mamba install -c conda-forge -c bioconda fastani mcl", message)
+
+    def test_every_module_tool_has_a_package(self):
+        for module, tools in config.MODULE_TOOLS.items():
+            for tool in tools:
+                with self.subTest(module=module, tool=tool):
+                    self.assertIn(tool, config.TOOL_PACKAGES)
 
     def test_execute_command(self):
         cmd_pass = "pwd"
