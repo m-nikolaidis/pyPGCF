@@ -122,6 +122,14 @@ class TestArgumentParsing(unittest.TestCase):
         self.assertEqual(args["cores"], 8)
         self.assertEqual(args["evalue"], "1e-5")
         self.assertEqual(args["dmnd_sensitivity"], "sensitive")
+        self.assertEqual(args["input_type"], "prot")
+
+    def test_orthologues_input_type_accepts_only_prot_or_cds(self):
+        base = ["orthologues", "-in", "fasta_dir", "-out", "output_dir", "-ref", "r"]
+        args = vars(self.parser.parse_args(base + ["--input_type", "cds"]))
+        self.assertEqual(args["input_type"], "cds")
+        with self.assertRaises(SystemExit), patch("sys.stderr"):
+            self.parser.parse_args(base + ["--input_type", "CDS"])
 
     def test_add_core_subparser(self):
         # Simulate CLI input for the core module
