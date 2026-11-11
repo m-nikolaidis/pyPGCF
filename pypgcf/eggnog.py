@@ -49,9 +49,9 @@ EGGNOG_HEADERS = [
     "evalue",
     "score",
     "eggNOG_OGs",
-    "max_annot_lvl",
+    "tax_ceiling",
+    "farthest_donor_lineage",
     "COG_category",
-    "Description",
     "Preferred_name",
     "GOs",
     "EC",
@@ -65,6 +65,7 @@ EGGNOG_HEADERS = [
     "CAZy",
     "BiGG_Reaction",
     "PFAMs",
+    "annotation_confidence",
 ]
 
 class EggNOGRunner:
@@ -74,9 +75,6 @@ class EggNOGRunner:
         fasta_files_list: list[Path],
         out_dir: Path,
         cores: int,
-        pident: float,
-        qcov: float,
-        scov: float,
         input_type: bool,
         database_dir: Path,
         debug: bool = False,
@@ -85,9 +83,6 @@ class EggNOGRunner:
         self.out_dir = out_dir / "eggNOG"
         self.emapper_resdir = self.out_dir / "eggnog_mapper"
         self.cores = cores
-        self.pident = pident
-        self.qcov = qcov
-        self.scov = scov
         self.nucl = True
         self.database_dir = database_dir
         if input_type == "prot":
@@ -103,11 +98,12 @@ class EggNOGRunner:
         for fasta_file in self.fasta_files:
             fout = self.emapper_resdir / (fasta_file.stem + "_eggNOG_results.csv")
             eggnog_cmd = ["emapper.py", "--cpu", str(self.cores)]
-            eggnog_cmd += ["--pident", str(self.pident), "--query_cov", str(self.qcov)]
-            eggnog_cmd += ["--subject_cov", str(self.scov), "-o", str(fout)]
+            eggnog_cmd += ["-o", str(fout)]
             eggnog_cmd += ["-i", str(fasta_file), "--data_dir", str(self.database_dir)]
             if self.nucl:
-                eggnog_cmd += ["--itype", "CDS", "--translate"]
+                eggnog_cmd += ["--itype", "CDS"]
+            else:
+                eggnog_cmd += ["--itype", "proteins"]
             cmds.append(eggnog_cmd)
         self.eggnog_cmds = cmds
 

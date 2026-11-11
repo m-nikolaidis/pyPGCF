@@ -22,7 +22,10 @@ requirements:
     - muscle ==3.8.1551
     - blast
     - diamond
-    - eggnog-mapper ==2.1.13
+    # eggnog-mapper v3 has no conda-forge/bioconda package yet (still a
+    # GitHub beta pre-release: v3.0.0-beta6). Install it separately, e.g.
+    # `pip install git+https://github.com/eggnogdb/eggnog-mapper.git@v3.0.0-beta6`,
+    # until a stable conda package exists.
     - fastani >=1.34,<2
     - mcl >=22.282,<23
     - dbcan >=5.2.8,<6

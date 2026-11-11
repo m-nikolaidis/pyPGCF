@@ -107,9 +107,6 @@ software_defaults = {
     },
     "eggnog": {
         "cores": usable_cores,
-        "pident": 40,
-        "scov": 20,
-        "qcov": 20,
         "debug": default_debug,
         "input_type": "prot",
         "valid_input_types": ["prot", "cds"],

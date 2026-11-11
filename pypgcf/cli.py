@@ -345,24 +345,6 @@ def add_eggnog_subparser(subparsers):
         type=int,
     )
     eggnog_mapper.add_argument(
-        "--pident",
-        metavar="N",
-        help="Percent identity",
-        default=software_defaults["eggnog"]["pident"],
-    )
-    eggnog_mapper.add_argument(
-        "--qcov",
-        metavar="N",
-        help="Query coverage",
-        default=software_defaults["eggnog"]["qcov"],
-    )
-    eggnog_mapper.add_argument(
-        "--scov",
-        metavar="N",
-        help="Suject coverage",
-        default=software_defaults["eggnog"]["scov"],
-    )
-    eggnog_mapper.add_argument(
         "--input_type",
         help="Type of input [prot or cds]",
         default=software_defaults["eggnog"]["input_type"],
@@ -777,9 +759,6 @@ def run_eggnog(args):
     debug = args["debug"]
     out_dir = Path(args["out"])
     cores = int(args["cores"])
-    pident = args["pident"]
-    qcov = args.get("qcov")
-    scov = args.get("scov")
     input_type = args.get("input_type")
 
     if input_type is None:
@@ -798,9 +777,6 @@ def run_eggnog(args):
             fasta_files_list=fasta_files,
             out_dir=out_dir,
             cores=cores,
-            pident=pident,
-            qcov=qcov,
-            scov=scov,
             input_type=input_type,
             database_dir=database_dir,
             debug=debug,

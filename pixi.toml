@@ -30,10 +30,14 @@ truststore = ">=0.10.5,<0.11"
 
 # Functional annotation modules: eggnog, smbgc, cazy, amr
 [feature.full.dependencies]
-eggnog-mapper = "==2.1.13"
 antismash = ">=8.0.4,<9"
 dbcan = ">=5.2.8,<6"
 ncbi-amrfinderplus = ">=3.12.8,<5"
+
+# eggnog-mapper v3 has no conda-forge/bioconda package yet (still a GitHub
+# beta pre-release), so it's installed from source via pypi-dependencies.
+[feature.full.pypi-dependencies]
+eggnog-mapper = { git = "https://github.com/eggnogdb/eggnog-mapper.git", rev = "v3.0.0-beta6" }
 
 [feature.test.dependencies]
 pytest = "*"

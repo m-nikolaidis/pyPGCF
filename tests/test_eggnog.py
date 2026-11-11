@@ -17,9 +17,9 @@ MKTIIALSYIFCLVFAQ
 MDAIKKKMQLEDKVEELLSK
 """
 
-EGGNOG_CSV_DATA = """#query\tseed_ortholog\tevalue\tscore\teggNOG_OGs\tmax_annot_lvl\tCOG_category\tDescription\tPreferred_name\tGOs\tEC\tKEGG_ko\tKEGG_Pathway\tKEGG_Module\tKEGG_Reaction\tKEGG_rclass\tBRITE\tKEGG_TC\tCAZy\tBiGG_Reaction\tPFAMs\n
-protein1\t224308.BSU02610\t4.66e-175\t488\tCOG2304@1|root,COG2304@2|Bacteria,1UZ85@1239|Firmicutes,4HCUJ@91061|Bacilli,1ZE5Y@1386|Bacillus\t91061|Bacilli\tT\tvWA found in TerF C terminus\tycbR\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\tTerD,vWA-TerF-like\n
-protein2\t224308.BSU40690\t1.27e-99\t290\t2BWFV@1|root,32QWV@2|Bacteria,1V8UN@1239|Firmicutes,4HK47@91061|Bacilli,1ZHNT@1386|Bacillus\t91061|Bacilli\t-\t-\tyybC\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\tDUF2798\n
+EGGNOG_CSV_DATA = """#query\tseed_ortholog\tevalue\tscore\teggNOG_OGs\ttax_ceiling\tfarthest_donor_lineage\tCOG_category\tPreferred_name\tGOs\tEC\tKEGG_ko\tKEGG_Pathway\tKEGG_Module\tKEGG_Reaction\tKEGG_rclass\tBRITE\tKEGG_TC\tCAZy\tBiGG_Reaction\tPFAMs\tannotation_confidence\n
+protein1\t224308.BSU02610\t4.66e-175\t488\tCOG2304@1|root,COG2304@2|Bacteria,1UZ85@1239|Firmicutes,4HCUJ@91061|Bacilli,1ZE5Y@1386|Bacillus\t91061|Bacilli\tBacillus\tT\tycbR\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\tTerD,vWA-TerF-like\thl----------\n
+protein2\t224308.BSU40690\t1.27e-99\t290\t2BWFV@1|root,32QWV@2|Bacteria,1V8UN@1239|Firmicutes,4HK47@91061|Bacilli,1ZHNT@1386|Bacillus\t91061|Bacilli\tBacillus\t-\tyybC\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\tDUF2798\tm-----------\n
 """
 
 EGGNOG_HEADERS = [
@@ -28,9 +28,9 @@ EGGNOG_HEADERS = [
     "evalue",
     "score",
     "eggNOG_OGs",
-    "max_annot_lvl",
+    "tax_ceiling",
+    "farthest_donor_lineage",
     "COG_category",
-    "Description",
     "Preferred_name",
     "GOs",
     "EC",
@@ -44,6 +44,7 @@ EGGNOG_HEADERS = [
     "CAZy",
     "BiGG_Reaction",
     "PFAMs",
+    "annotation_confidence",
 ]
 
 # Mock for COG_CATEGORY_ANNOTATION
@@ -84,9 +85,6 @@ class TestEggNOGRunner(unittest.TestCase):
             fasta_files_list=[Path("/fake/fasta1.fasta")],
             out_dir=Path("/fake/out_dir"),
             cores=4,
-            pident=0.8,
-            qcov=0.9,
-            scov=0.85,
             input_type="nucl",
             database_dir=Path("/fake/db"),
             debug=False,
@@ -156,13 +154,10 @@ class TestEggNOGRunner(unittest.TestCase):
             [
                 "emapper.py",
                 "--cpu 4",
-                "--pident 0.8",
-                "--query_cov 0.9",
-                "--subject_cov 0.85",
                 "-o /fake/out_dir/eggNOG/eggnog_mapper/fasta1_eggNOG_results.csv",
                 "-i /fake/fasta1.fasta",
                 "--data_dir /fake/db",
-                "--itype CDS --translate",
+                "--itype CDS",
             ]
         ).split()
 
@@ -180,12 +175,10 @@ class TestEggNOGRunner(unittest.TestCase):
             [
                 "emapper.py",
                 "--cpu 4",
-                "--pident 0.8",
-                "--query_cov 0.9",
-                "--subject_cov 0.85",
                 "-o /fake/out_dir/eggNOG/eggnog_mapper/fasta1_eggNOG_results.csv",
                 "-i /fake/fasta1.fasta",
                 "--data_dir /fake/db",
+                "--itype proteins",
             ]
         ).split()
 
